@@ -1,0 +1,1065 @@
+# 🍔 Food Delivery Backend API
+
+## 🎯 Project Goal
+
+একটি production-style **Food Delivery Backend API** তৈরি করা হবে যেখানে Customer, Restaurant, Food, Cart, Order, Payment, Rider, Review, Notification এবং AI Assistant থাকবে।
+
+Project-এর মূল লক্ষ্য হবে শুধু CRUD না করে **real-world backend architecture** practice করা।
+
+---
+
+# 🛠️ Technology Stack
+
+### Backend
+
+* FastAPI
+* Python
+* Async SQLAlchemy
+* PostgreSQL
+* Alembic
+
+### Authentication
+
+* JWT
+* Access Token
+* Refresh Token
+* bcrypt
+* Email Verification
+* Forgot/Reset Password
+
+### Background Processing
+
+* RabbitMQ
+* Celery
+* Flower
+
+### Caching / Real-time
+
+* Redis
+* WebSocket
+
+### Payment
+
+* SSLCOMMERZ Sandbox
+
+### AI
+
+* Ollama
+* AI Food Recommendation
+* AI Customer Support
+
+### DevOps
+
+* Docker
+* Docker Compose
+* Git
+* GitHub
+
+### Testing
+
+* Pytest
+
+---
+
+# 📁 Main Modules
+
+## 1. Authentication
+
+Features:
+
+* Register
+* Login
+* Logout
+* JWT Access Token
+* Refresh Token
+* Email Verification
+* Forgot Password
+* Reset Password
+* Change Password
+
+Roles:
+
+```text
+CUSTOMER
+RESTAURANT_OWNER
+RIDER
+ADMIN
+```
+
+---
+
+# 2. User Management
+
+Customer features:
+
+* View Profile
+* Update Profile
+* Upload Profile Image
+* Add Phone
+* Manage Addresses
+* Default Address
+
+Address:
+
+```text
+id
+user_id
+address
+city
+area
+postal_code
+latitude
+longitude
+is_default
+created_at
+updated_at
+```
+
+---
+
+# 3. Restaurant
+
+Restaurant owner can:
+
+* Create Restaurant
+* Update Restaurant
+* Delete Restaurant
+* Restaurant Profile
+* Upload Restaurant Image
+* Opening Hours
+* Close/Open Restaurant
+* View Orders
+
+Restaurant status:
+
+```text
+OPEN
+CLOSED
+BUSY
+```
+
+---
+
+# 4. Food Category
+
+Example:
+
+```text
+Burger
+Pizza
+Chicken
+Rice
+Drinks
+Dessert
+```
+
+Features:
+
+* Create Category
+* Update Category
+* Delete Category
+* Get Categories
+* Search Category
+
+---
+
+# 5. Food / Menu
+
+Restaurant can create food items.
+
+Fields:
+
+```text
+id
+restaurant_id
+category_id
+name
+description
+price
+image_url
+is_available
+created_at
+updated_at
+```
+
+Features:
+
+* Create Food
+* Update Food
+* Delete Food
+* Get Food
+* Search Food
+* Filter by Category
+* Filter by Restaurant
+* Availability Management
+
+---
+
+# 6. Cart
+
+Customer can:
+
+```text
+Add Food
+Update Quantity
+Remove Food
+Clear Cart
+View Cart
+```
+
+Cart calculation:
+
+```text
+Food Price × Quantity
+        +
+Delivery Fee
+        +
+Tax
+        -
+Discount
+        =
+Grand Total
+```
+
+---
+
+# 7. Coupon / Discount
+
+Features:
+
+* Create Coupon
+* Apply Coupon
+* Remove Coupon
+* Expiry Date
+* Minimum Order Amount
+* Maximum Discount
+* Percentage Discount
+* Fixed Discount
+* Usage Limit
+
+Example:
+
+```text
+FOOD20
+
+20% OFF
+Minimum Order: 500 BDT
+Maximum Discount: 200 BDT
+```
+
+---
+
+# 8. Order
+
+Order flow:
+
+```text
+Cart
+ ↓
+Checkout
+ ↓
+Create Order
+ ↓
+Payment
+ ↓
+Restaurant Confirmation
+ ↓
+Food Preparing
+ ↓
+Rider Assigned
+ ↓
+Picked Up
+ ↓
+Out for Delivery
+ ↓
+Delivered
+```
+
+Order status:
+
+```text
+PENDING
+CONFIRMED
+PREPARING
+READY
+RIDER_ASSIGNED
+PICKED_UP
+OUT_FOR_DELIVERY
+DELIVERED
+CANCELLED
+```
+
+---
+
+# 9. Order Item
+
+একটি order-এর ভিতরে multiple food থাকতে পারবে।
+
+Example:
+
+```text
+Order #1001
+
+Burger × 2
+Pizza × 1
+Coke × 2
+```
+
+Order Item fields:
+
+```text
+id
+order_id
+food_id
+quantity
+price
+subtotal
+```
+
+Important:
+
+Order তৈরি হওয়ার সময় food-এর বর্তমান price `OrderItem.price`-এ save করতে হবে।
+
+কারণ পরে food-এর price পরিবর্তন হলেও পুরোনো order-এর price পরিবর্তন হওয়া উচিত নয়।
+
+---
+
+# 10. Checkout
+
+Checkout-এর সময়:
+
+```text
+Cart
+ ↓
+Validate Food Availability
+ ↓
+Calculate Subtotal
+ ↓
+Apply Coupon
+ ↓
+Calculate Tax
+ ↓
+Calculate Delivery Fee
+ ↓
+Calculate Grand Total
+ ↓
+Create Order
+```
+
+এখানে transaction এবং validation properly handle করতে হবে।
+
+---
+
+# 11. Payment
+
+Payment provider:
+
+**SSLCOMMERZ Sandbox**
+
+Payment flow:
+
+```text
+Create Order
+      ↓
+Create Payment
+      ↓
+SSLCOMMERZ
+      ↓
+Customer Payment
+      ↓
+Success / Fail / Cancel
+      ↓
+Callback / IPN
+      ↓
+Verify Payment
+      ↓
+Update Payment Status
+      ↓
+Update Order Status
+```
+
+Payment status:
+
+```text
+PENDING
+PROCESSING
+PAID
+FAILED
+CANCELLED
+REFUNDED
+```
+
+---
+
+# 12. Rider / Delivery
+
+Rider features:
+
+* Rider Registration
+* Rider Profile
+* Online/Offline Status
+* Accept Delivery
+* Reject Delivery
+* View Assigned Orders
+* Update Delivery Status
+
+Flow:
+
+```text
+Order Ready
+     ↓
+Find Available Rider
+     ↓
+Assign Rider
+     ↓
+Rider Accepts
+     ↓
+Food Pickup
+     ↓
+Delivery
+     ↓
+Delivered
+```
+
+---
+
+# 13. Real-time Tracking
+
+Technology:
+
+```text
+WebSocket
++
+Redis
+```
+
+Customer দেখতে পারবে:
+
+```text
+Restaurant accepted
+       ↓
+Food preparing
+       ↓
+Rider assigned
+       ↓
+Rider picked up
+       ↓
+Out for delivery
+       ↓
+Delivered
+```
+
+Future enhancement:
+
+```text
+Rider GPS
+ ↓
+Redis
+ ↓
+WebSocket
+ ↓
+Customer
+```
+
+---
+
+# 14. Notification System
+
+Notification types:
+
+### Email
+
+* Welcome Email
+* Account Verification
+* Password Reset
+* Order Confirmation
+* Payment Confirmation
+* Order Delivered
+
+### In-App
+
+* Order Status
+* Payment Status
+* Rider Assigned
+* Promotional Notification
+
+Background processing:
+
+```text
+FastAPI
+   ↓
+Celery
+   ↓
+RabbitMQ
+   ↓
+Worker
+   ↓
+Email / Notification
+```
+
+---
+
+# 15. Review & Rating
+
+Customer can review:
+
+* Restaurant
+* Food
+* Delivery
+
+Fields:
+
+```text
+rating
+comment
+user_id
+restaurant_id
+food_id
+order_id
+created_at
+```
+
+Rating:
+
+```text
+1 ⭐
+2 ⭐
+3 ⭐
+4 ⭐
+5 ⭐
+```
+
+একজন customer একই order/food-এর জন্য duplicate review করতে পারবে না।
+
+---
+
+# 16. Search & Filtering
+
+Food search:
+
+```text
+/search?query=burger
+```
+
+Filter:
+
+```text
+Category
+Restaurant
+Price
+Rating
+Availability
+```
+
+Sorting:
+
+```text
+Price Low → High
+Price High → Low
+Rating
+Newest
+Popular
+```
+
+Pagination অবশ্যই রাখতে হবে।
+
+---
+
+# 17. Redis
+
+Redis ব্যবহার হবে:
+
+### Cache
+
+```text
+Popular Foods
+Restaurant List
+Food Categories
+```
+
+### Temporary Data
+
+```text
+OTP
+Verification Token
+Rate Limit
+```
+
+### Real-time
+
+```text
+Rider Location
+Order Status
+WebSocket Pub/Sub
+```
+
+---
+
+# 18. Celery + RabbitMQ
+
+Celery background jobs:
+
+```text
+Send Email
+Send Notification
+Process Order Notification
+Generate Reports
+Cleanup Expired Tokens
+```
+
+Architecture:
+
+```text
+FastAPI
+    ↓
+Celery Task
+    ↓
+RabbitMQ
+    ↓
+Celery Worker
+    ↓
+Task Processing
+```
+
+Flower:
+
+```text
+Celery
+   ↓
+Flower
+   ↓
+Monitor Tasks
+```
+
+---
+
+# 19. AI Food Assistant 🤖
+
+Ollama ব্যবহার করে AI assistant তৈরি করা হবে।
+
+Example:
+
+```text
+User:
+
+আমার budget 500 টাকা।
+Chicken খাবার চাই।
+Spicy খাবার চাই।
+```
+
+AI:
+
+```text
+আপনার জন্য:
+
+1. Chicken Burger - 250 BDT
+2. Spicy Chicken Pizza - 400 BDT
+3. Chicken Wings - 300 BDT
+```
+
+AI database-এর available food data ব্যবহার করে recommendation দেবে।
+
+---
+
+# 20. AI Customer Support
+
+Example:
+
+```text
+User:
+আমার order #1024 কোথায়?
+```
+
+AI:
+
+```text
+Order #1024 বর্তমানে
+"Out for Delivery" status-এ আছে।
+
+Rider আপনার order নিয়ে
+delivery-এর পথে আছে।
+```
+
+AI-কে database-এর sensitive data সরাসরি unrestricted access দেওয়া যাবে না।
+
+Backend controlled tools/functions দিয়ে data দিতে হবে।
+
+---
+
+# 21. Admin Panel / Admin API
+
+Admin features:
+
+### Users
+
+```text
+View Users
+Block User
+Unblock User
+Delete User
+```
+
+### Restaurants
+
+```text
+Approve Restaurant
+Reject Restaurant
+Block Restaurant
+```
+
+### Orders
+
+```text
+View All Orders
+Filter Orders
+Cancel Order
+```
+
+### Payments
+
+```text
+View Payments
+Payment Statistics
+Refund Management
+```
+
+### Reports
+
+```text
+Total Orders
+Total Revenue
+Total Users
+Top Restaurants
+Top Foods
+```
+
+---
+
+# 22. Security
+
+Must implement:
+
+```text
+JWT Authentication
+Password Hashing
+Role Based Access Control
+Input Validation
+Rate Limiting
+CORS
+Secure Environment Variables
+SQL Injection Protection
+File Upload Validation
+Payment Verification
+```
+
+`.env` কখনো GitHub-এ push করা যাবে না।
+
+---
+
+# 23. API Versioning
+
+API structure:
+
+```text
+/api/v1/auth
+/api/v1/users
+/api/v1/restaurants
+/api/v1/categories
+/api/v1/foods
+/api/v1/cart
+/api/v1/orders
+/api/v1/payments
+/api/v1/riders
+/api/v1/reviews
+/api/v1/notifications
+/api/v1/admin
+/api/v1/ai
+```
+
+---
+
+# 24. Suggested Folder Structure
+
+```text
+food-delivery-backend/
+│
+├── app/
+│   ├── api/
+│   │   └── v1/
+│   │       ├── auth/
+│   │       ├── users/
+│   │       ├── restaurants/
+│   │       ├── categories/
+│   │       ├── foods/
+│   │       ├── cart/
+│   │       ├── orders/
+│   │       ├── payments/
+│   │       ├── riders/
+│   │       ├── reviews/
+│   │       ├── notifications/
+│   │       ├── admin/
+│   │       └── ai/
+│   │
+│   ├── models/
+│   ├── schemas/
+│   ├── services/
+│   ├── repositories/
+│   ├── dependencies/
+│   └── utils/
+│
+├── config/
+│
+├── tasks/
+│
+├── alembic/
+│
+├── tests/
+│
+├── uploads/
+│
+├── docker/
+│
+├── .env
+├── .env.example
+├── .gitignore
+├── alembic.ini
+├── Dockerfile
+├── docker-compose.yml
+├── requirements.txt
+├── README.md
+└── main.py
+```
+
+---
+
+# 🗄️ Main Database Tables
+
+```text
+users
+addresses
+restaurants
+restaurant_hours
+
+food_categories
+foods
+food_addons
+
+carts
+cart_items
+
+coupons
+
+orders
+order_items
+
+payments
+
+riders
+deliveries
+
+reviews
+
+notifications
+refresh_tokens
+password_reset_tokens
+```
+
+---
+
+# 🚀 Development Order
+
+সব একসাথে শুরু করা যাবে না।
+
+### Phase 1 — Foundation
+
+```text
+1. Project Setup
+2. PostgreSQL
+3. SQLAlchemy
+4. Alembic
+5. Docker
+6. Environment Configuration
+```
+
+### Phase 2 — Authentication
+
+```text
+7. User Model
+8. Register
+9. Login
+10. JWT
+11. Refresh Token
+12. Email Verification
+13. Forgot Password
+```
+
+### Phase 3 — Restaurant & Food
+
+```text
+14. Restaurant
+15. Restaurant Hours
+16. Food Category
+17. Food
+18. Search
+19. Filtering
+20. Pagination
+```
+
+### Phase 4 — Shopping
+
+```text
+21. Cart
+22. Cart Items
+23. Coupon
+24. Checkout
+```
+
+### Phase 5 — Order
+
+```text
+25. Order
+26. Order Item
+27. Order Status
+28. Order History
+```
+
+### Phase 6 — Payment
+
+```text
+29. Payment Model
+30. SSLCOMMERZ
+31. Payment Initialization
+32. Success Callback
+33. Fail Callback
+34. Cancel Callback
+35. IPN
+36. Payment Verification
+```
+
+### Phase 7 — Delivery
+
+```text
+37. Rider
+38. Delivery
+39. Rider Assignment
+40. Delivery Status
+41. WebSocket Tracking
+```
+
+### Phase 8 — Async Processing
+
+```text
+42. RabbitMQ
+43. Celery
+44. Email Tasks
+45. Notification Tasks
+46. Flower
+```
+
+### Phase 9 — Redis
+
+```text
+47. Redis
+48. Caching
+49. Rate Limiting
+50. Pub/Sub
+```
+
+### Phase 10 — AI
+
+```text
+51. Ollama
+52. Food Recommendation
+53. AI Customer Support
+```
+
+### Phase 11 — Testing
+
+```text
+54. Pytest
+55. Auth Tests
+56. Food Tests
+57. Cart Tests
+58. Order Tests
+59. Payment Tests
+60. Integration Tests
+```
+
+### Phase 12 — Deployment
+
+```text
+61. Docker Compose
+62. Production Environment
+63. PostgreSQL
+64. Redis
+65. RabbitMQ
+66. Celery Worker
+67. Flower
+68. FastAPI
+69. Nginx
+70. CI/CD
+```
+
+---
+
+# ⭐ Final Project Target
+
+শেষে architecture হবে:
+
+```text
+                    ┌──────────────┐
+                    │   Client     │
+                    └──────┬───────┘
+                           ↓
+                    ┌──────────────┐
+                    │   FastAPI    │
+                    └──────┬───────┘
+                           ↓
+              ┌────────────┴────────────┐
+              ↓                         ↓
+        PostgreSQL                    Redis
+              │                         │
+              │                    WebSocket
+              │
+              ↓
+         Order / Food
+         Payment / User
+              │
+              ↓
+          Celery
+              ↓
+          RabbitMQ
+              ↓
+        Background Tasks
+              │
+              ↓
+       Email / Notification
+
+              ┌──────────────┐
+              │ SSLCOMMERZ   │
+              └──────────────┘
+
+              ┌──────────────┐
+              │   Ollama AI  │
+              └──────────────┘
+```
+
+## 🎯 Portfolio Goal
+
+এই project শেষ হলে GitHub README-তে highlight করা যাবে:
+
+* Production-style FastAPI architecture
+* Async PostgreSQL
+* JWT Authentication
+* Role Based Access Control
+* Redis Caching
+* RabbitMQ + Celery
+* Real-time WebSocket
+* SSLCOMMERZ Payment
+* AI Food Recommendation
+* AI Customer Support
+* Dockerized Backend
+* Automated Tests
+* API Documentation
+
+
