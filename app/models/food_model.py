@@ -35,3 +35,6 @@ class Food(Base):
     restaurant = relationship("Restaurant",back_populates="foods")
 
     category = relationship("FoodCategory",back_populates="foods")
+
+    reviews = relationship("Review",back_populates="food",
+        cascade="all, delete-orphan")

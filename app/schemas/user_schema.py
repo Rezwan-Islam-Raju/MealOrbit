@@ -91,6 +91,50 @@ class UserChangePasswordResponse(BaseModel):
     message: str
 
 
+class UserProfileAllResponse(BaseModel):
+    first_name: str
+    last_name: str
+    email: EmailStr
+    phone: str|None
+    profile_image:str| None
+    role: str
+    is_active: bool
+    is_verified: bool
+
+class UserUpdateProfileRequest(BaseModel):
+    first_name: str | None = Field(default=None,min_length=2,max_length=100)
+
+    last_name: str | None = Field(default=None,min_length=2, max_length=100 )
+
+    email: EmailStr | None = None
+
+    phone: str | None = Field(default=None, min_length=10,max_length=20)
 
 
+
+
+class UserUpdateProfileResponse(BaseModel):
+    message: str
+
+
+class UserUpdatePhoneRequest(BaseModel):
+    phone: str = Field(min_length=10, max_length=20)
+
+
+class UserUpdatePhoneResponse(BaseModel):
+    message: str
+
+
+class UserProfileImageResponse(BaseModel):
+    profile_image: str | None
+
+
+class UserDeactivateResponse(BaseModel):
+    message: str
+
+
+
+
+class UserDeleteProfileImageResponse(BaseModel):
+    message: str
 

@@ -7,7 +7,7 @@ import datetime
 import os
 from dotenv import load_dotenv
 import secrets
-
+from pydantic_settings import BaseSettings
 load_dotenv()
 
 
@@ -234,3 +234,19 @@ def hash_reset_token(token: str):
 def generate_transaction_id():
     return f"TXN-{uuid.uuid4().hex[:20].upper()}"
 
+
+
+
+class Settings(BaseSettings):
+    SECRET_KEY: str
+    ALGORITHM: str = "HS256"
+
+    SMTP_HOST: str
+    SMTP_PORT: int = 25
+    SMTP_USER: str
+    SMTP_PASSWORD: str
+    SMTP_FROM: str
+
+
+
+settings = Settings()

@@ -1,11 +1,12 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from fastapi.params import Depends
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from starlette import status
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
+
+from app.core.rate_limit import rate_limit
 from app.dependencies.auth_dependecy import require_user_id
-from app.models.user_model import User
+
 
 from app.schemas.user_schema import UserProfileResponse, UserRegisterRequest, UserLoginResponse, UserLoginRequest, \
     UserEmailVerificationRequest, UserEmailVerificationResponse, UserRefreshTokenResponse, UserRefreshTokenRequest, \
@@ -41,7 +42,10 @@ async def register(request:UserRegisterRequest,db:AsyncSession=Depends(get_db)):
 
 @router.post(
     "/verify-email",
-    response_model=UserEmailVerificationResponse
+    response_model=UserEmailVerificationResponse,
+    dependencies=[
+        Depends(rate_limit(limit=5, window=60))
+    ]
 )
 async def verify_email(
     request: UserEmailVerificationRequest,
@@ -59,6 +63,9 @@ async def verify_email(
 @router.post(
     "/login",
     response_model=UserLoginResponse,
+    dependencies=[
+        Depends(rate_limit(limit=5, window=60))
+    ]
 )
 async def login(
     request: UserLoginRequest,
@@ -92,7 +99,10 @@ async def refresh_token(
 
 #-----Forgot Password-----
 
-@router.post("/forgot-password",response_model=UserForgotPasswordResponse)
+@router.post("/forgot-password",
+             response_model=UserForgotPasswordResponse,
+             dependencies=[Depends(rate_limit(limit=3, window=60))]
+)
 async def forgot_password(
     request: UserForgotPasswordRequest,db:AsyncSession = Depends(get_db)
 ):

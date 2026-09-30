@@ -6,7 +6,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
-from app.models import User
+from app.core.pubsub import publish_message
+from app.models.user_model import User
 from app.models.order_model import Order, OrderStatus
 from app.models.payment_model import Payment
 
@@ -309,18 +310,15 @@ async def create_payment_service(
 
 # PAYMENT SUCCESS CALLBACK
 
-
 async def payment_success_service(
     db: AsyncSession,
     tran_id: str,
     val_id: str,
     payment_status: str,
 ):
+    print("Callback status:", payment_status)
 
-
-    #  Find payment using transaction ID
-
-
+    # Find payment using transaction ID
     result = await db.execute(
         select(Payment).where(
             Payment.transaction_id == tran_id
@@ -330,17 +328,13 @@ async def payment_success_service(
     payment = result.scalar_one_or_none()
 
     if payment is None:
-
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Payment not found",
         )
 
-
-    #  Already paid
-
+    # Prevent duplicate payment confirmation
     if payment.status == "paid":
-
         return {
             "message": "Payment already confirmed",
             "payment_id": payment.id,
@@ -349,31 +343,14 @@ async def payment_success_service(
             "status": payment.status,
         }
 
-
-    #  Callback status check
-
-    if payment_status.lower() != "success":
-
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Payment was not successful",
-        )
-
-
-    #  Validate val_id
-
-
+    # Validate val_id
     if not val_id:
-
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Validation ID is required",
         )
 
-
-    #  Find order
-
-
+    # Find order
     result = await db.execute(
         select(Order).where(
             Order.id == payment.order_id
@@ -383,16 +360,12 @@ async def payment_success_service(
     order = result.scalar_one_or_none()
 
     if order is None:
-
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Order not found",
         )
 
-
-    #  SSLCOMMERZ VALIDATION
-
-
+    # SSLCOMMERZ Validation API
     validation_params = {
         "val_id": val_id,
         "store_id": SSLCOMMERZ_STORE_ID,
@@ -401,7 +374,6 @@ async def payment_success_service(
     }
 
     try:
-
         async with httpx.AsyncClient() as client:
 
             response = await client.get(
@@ -419,25 +391,18 @@ async def payment_success_service(
         httpx.RequestError,
         ValueError,
     ):
-
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="SSLCOMMERZ validation failed",
         )
 
-
-    #  Check validation status
-
-
-    ssl_status = validation_data.get(
-        "status"
-    )
+    # Check SSLCOMMERZ validation status
+    ssl_status = validation_data.get("status")
 
     if ssl_status not in (
         "VALID",
         "VALIDATED",
     ):
-
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=(
@@ -446,84 +411,74 @@ async def payment_success_service(
             ),
         )
 
+    # Verify transaction ID
+    validated_tran_id = validation_data.get("tran_id")
 
-    #  Verify transaction ID
-
-
-    validated_tran_id = validation_data.get(
-        "tran_id"
-    )
+    if not validated_tran_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Transaction ID missing from SSLCOMMERZ validation",
+        )
 
     if validated_tran_id != payment.transaction_id:
-
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Transaction ID verification failed",
         )
 
+    # Verify amount
+    validated_amount_raw = validation_data.get("amount")
 
-    #  Verify amount
-
-
-    validated_amount = Decimal(
-        str(
-            validation_data.get(
-                "amount"
-            )
+    if validated_amount_raw is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Payment amount missing from SSLCOMMERZ validation",
         )
-    )
 
-    payment_amount = Decimal(
-        str(payment.amount)
-    )
+    try:
+        validated_amount = Decimal(
+            str(validated_amount_raw)
+        )
+
+        payment_amount = Decimal(
+            str(payment.amount)
+        )
+
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid payment amount received from SSLCOMMERZ",
+        )
 
     if validated_amount != payment_amount:
-
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Payment amount verification failed",
         )
 
-
-    #  Verify currency
-
-
-    currency = validation_data.get(
-        "currency"
-    )
+    # Verify currency
+    currency = validation_data.get("currency")
 
     if currency != "BDT":
-
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Payment currency verification failed",
         )
 
-
-    # MARK PAYMENT AS PAID
-
-
+    # Mark payment as paid
     payment.status = "paid"
 
-
-    #  CONFIRM ORDER
-
-
+    # Confirm order
     order.status = OrderStatus.CONFIRMED
 
-
-    #  SAVE
-
-
+    # Save changes
     try:
-
         await db.commit()
 
         await db.refresh(payment)
         await db.refresh(order)
 
     except Exception:
-
         await db.rollback()
 
         raise HTTPException(
@@ -531,22 +486,341 @@ async def payment_success_service(
             detail="Failed to confirm payment",
         )
 
+    # Publish payment notification event
+    await publish_message(
+        "notification_channel",
+        {
+            "user_id": order.user_id,
+            "title": "Payment Successful",
+            "message": f"Payment for order #{order.id} was successful.",
+            "notification_type": "PAYMENT",
+        },
+    )
 
-    #  RETURN
-
-
+    # Return response
     return {
         "message": "Payment successfully verified",
-
         "payment_id": payment.id,
-
         "order_id": order.id,
-
         "transaction_id": payment.transaction_id,
-
         "status": payment.status,
-
         "order_status": order.status.value,
+        "validation_status": ssl_status,
+    }
 
+
+# PAYMENT FAIL CALLBACK
+
+async def payment_fail_service(
+    db: AsyncSession,
+    tran_id: str,
+):
+    # Find payment
+    result = await db.execute(
+        select(Payment).where(
+            Payment.transaction_id == tran_id
+        )
+    )
+
+    payment = result.scalar_one_or_none()
+
+    if payment is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Payment not found",
+        )
+
+    # Already paid payment cannot become failed
+    if payment.status == "paid":
+        return {
+            "message": "Payment already confirmed",
+            "payment_id": payment.id,
+            "order_id": payment.order_id,
+            "transaction_id": payment.transaction_id,
+            "status": payment.status,
+        }
+
+    # Mark payment as failed
+    payment.status = "failed"
+
+    try:
+        await db.commit()
+        await db.refresh(payment)
+
+    except Exception:
+        await db.rollback()
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update payment status",
+        )
+
+    return {
+        "message": "Payment failed",
+        "payment_id": payment.id,
+        "order_id": payment.order_id,
+        "transaction_id": payment.transaction_id,
+        "status": payment.status,
+    }
+
+
+
+# PAYMENT CANCEL CALLBACK
+
+async def payment_cancel_service(
+    db: AsyncSession,
+    tran_id: str,
+):
+    # Find payment
+    result = await db.execute(
+        select(Payment).where(
+            Payment.transaction_id == tran_id
+        )
+    )
+
+    payment = result.scalar_one_or_none()
+
+    if payment is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Payment not found",
+        )
+
+    # Already paid payment cannot become cancelled
+    if payment.status == "paid":
+        return {
+            "message": "Payment already confirmed",
+            "payment_id": payment.id,
+            "order_id": payment.order_id,
+            "transaction_id": payment.transaction_id,
+            "status": payment.status,
+        }
+
+    # Mark payment as cancelled
+    payment.status = "cancelled"
+
+    try:
+        await db.commit()
+        await db.refresh(payment)
+
+    except Exception:
+        await db.rollback()
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update payment status",
+        )
+
+    return {
+        "message": "Payment cancelled",
+        "payment_id": payment.id,
+        "order_id": payment.order_id,
+        "transaction_id": payment.transaction_id,
+        "status": payment.status,
+    }
+
+
+
+# PAYMENT IPN
+
+async def payment_ipn_service(
+    db: AsyncSession,
+    tran_id: str,
+    val_id: str,
+    payment_status: str,
+):
+    # Find payment
+    result = await db.execute(
+        select(Payment).where(
+            Payment.transaction_id == tran_id
+        )
+    )
+
+    payment = result.scalar_one_or_none()
+
+    if payment is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Payment not found",
+        )
+
+    # Already paid
+    if payment.status == "paid":
+        return {
+            "message": "Payment already confirmed",
+            "payment_id": payment.id,
+            "order_id": payment.order_id,
+            "transaction_id": payment.transaction_id,
+            "status": payment.status,
+        }
+
+    # IPN status must be successful
+    if payment_status != "VALID":
+        if payment_status == "FAILED":
+            payment.status = "failed"
+
+        elif payment_status == "CANCELLED":
+            payment.status = "cancelled"
+
+        elif payment_status in ("EXPIRED", "UNATTEMPTED"):
+            payment.status = "failed"
+
+        else:
+            return {
+                "message": "Payment status not processed",
+                "payment_id": payment.id,
+                "transaction_id": payment.transaction_id,
+                "status": payment_status,
+            }
+
+        await db.commit()
+        await db.refresh(payment)
+
+        return {
+            "message": "Payment status updated",
+            "payment_id": payment.id,
+            "order_id": payment.order_id,
+            "transaction_id": payment.transaction_id,
+            "status": payment.status,
+        }
+
+    # val_id required for successful transaction
+    if not val_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Validation ID is required",
+        )
+
+    # Find order
+    result = await db.execute(
+        select(Order).where(
+            Order.id == payment.order_id
+        )
+    )
+
+    order = result.scalar_one_or_none()
+
+    if order is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Order not found",
+        )
+
+    # Validate with SSLCOMMERZ
+    validation_params = {
+        "val_id": val_id,
+        "store_id": SSLCOMMERZ_STORE_ID,
+        "store_passwd": SSLCOMMERZ_STORE_PASSWORD,
+        "format": "json",
+    }
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                SSLCOMMERZ_VALIDATION_URL,
+                params=validation_params,
+                timeout=30,
+            )
+
+            response.raise_for_status()
+
+            validation_data = response.json()
+
+    except (
+        httpx.HTTPStatusError,
+        httpx.RequestError,
+        ValueError,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="SSLCOMMERZ validation failed",
+        )
+
+    # Check validation status
+    ssl_status = validation_data.get("status")
+
+    if ssl_status not in (
+        "VALID",
+        "VALIDATED",
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                "SSLCOMMERZ payment validation failed: "
+                f"{ssl_status}"
+            ),
+        )
+
+    # Verify transaction ID
+    validated_tran_id = validation_data.get("tran_id")
+
+    if validated_tran_id != payment.transaction_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Transaction ID verification failed",
+        )
+
+    # Verify amount
+    validated_amount_raw = validation_data.get("amount")
+
+    if validated_amount_raw is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Payment amount missing from SSLCOMMERZ validation",
+        )
+
+    try:
+        validated_amount = Decimal(
+            str(validated_amount_raw)
+        )
+
+        payment_amount = Decimal(
+            str(payment.amount)
+        )
+
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid payment amount",
+        )
+
+    if validated_amount != payment_amount:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Payment amount verification failed",
+        )
+
+    # Verify currency
+    if validation_data.get("currency") != "BDT":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Payment currency verification failed",
+        )
+
+    # Mark paid
+    payment.status = "paid"
+    order.status = OrderStatus.CONFIRMED
+
+    try:
+        await db.commit()
+
+        await db.refresh(payment)
+        await db.refresh(order)
+
+    except Exception:
+        await db.rollback()
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to confirm IPN payment",
+        )
+
+    return {
+        "message": "IPN payment successfully verified",
+        "payment_id": payment.id,
+        "order_id": order.id,
+        "transaction_id": payment.transaction_id,
+        "status": payment.status,
+        "order_status": order.status.value,
         "validation_status": ssl_status,
     }

@@ -1,16 +1,17 @@
 from fastapi import HTTPException
-from fastapi.params import Depends
+
 from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
-
+from app.core.cache import get_cache, set_cache, delete_cache
+from app.models import  Restaurant
 from app.models.food_category_model import FoodCategory
+from app.models.user_model import User
 from app.schemas.food_category_schema import (
     FoodCategoryCreateRequest,
     FoodCategoryUpdateRequest,
 )
-
 
 async def food_create_category_service(
     request: FoodCategoryCreateRequest,
@@ -50,12 +51,28 @@ async def food_create_category_service(
     await db.commit()
     await db.refresh(category)
 
+    # Redis cache invalidation
+    await delete_cache("categories:all")
+
     return category
+
 
 async def food_get_all_categories_service(
     db: AsyncSession
 ):
-    result = await db.execute(select(FoodCategory).where( FoodCategory.is_active == True)
+    cache_key = "categories:all"
+
+    cached_categories = await get_cache(cache_key)
+
+    if cached_categories is not None:
+
+        return cached_categories
+
+    result = await db.execute(
+        select(FoodCategory)
+        .where(
+            FoodCategory.is_active.is_(True)
+        )
         .order_by(
             FoodCategory.name.asc()
         )
@@ -63,8 +80,26 @@ async def food_get_all_categories_service(
 
     categories = result.scalars().all()
 
-    return categories
+    category_data = [
+        {
+            "id": category.id,
+            "name": category.name,
+            "description": category.description,
+            "img_url": category.img_url,
+            "is_active": category.is_active,
+            "created_at": category.created_at,
+            "updated_at": category.updated_at,
+        }
+        for category in categories
+    ]
 
+    await set_cache(
+        cache_key,
+        category_data,
+        expire=300
+    )
+
+    return category_data
 
 async def food_search_category_service(
     db: AsyncSession,
@@ -119,13 +154,55 @@ async def food_update_category_service(
     user_id: int,
     db: AsyncSession
 ):
-    # Find category
+    # Find current user
     result = await db.execute(
-        select(FoodCategory).where(
-            FoodCategory.id == category_id,
-            FoodCategory.is_active.is_(True)
+        select(User).where(
+            User.user_id == user_id
         )
     )
+
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    # Check role
+    if user.role not in ["admin", "restaurant_owner"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not admin or restaurant_owner"
+        )
+
+    # ADMIN
+
+    if user.role == "admin":
+
+        result = await db.execute(
+            select(FoodCategory).where(
+                FoodCategory.id == category_id,
+                FoodCategory.is_active.is_(True)
+            )
+        )
+
+    # RESTAURANT OWNER
+
+    else:
+
+        result = await db.execute(select(FoodCategory)
+            .join(
+                Restaurant,
+                FoodCategory.restaurant_id == Restaurant.id
+            )
+            .where(
+                FoodCategory.id == category_id,
+                FoodCategory.is_active.is_(True),
+                Restaurant.owner_id == user_id,
+                Restaurant.is_active.is_(True)
+            )
+        )
 
     category = result.scalar_one_or_none()
 
@@ -136,6 +213,7 @@ async def food_update_category_service(
         )
 
     # Update name
+
     if request.name is not None:
 
         new_name = request.name.strip()
@@ -147,10 +225,10 @@ async def food_update_category_service(
             )
 
         # Check duplicate category name
-        duplicate_result = await db.execute(
-            select(FoodCategory).where(
-                FoodCategory.name==new_name,
+        duplicate_result = await db.execute(select(FoodCategory).where(
+                FoodCategory.name == new_name,
                 FoodCategory.id != category_id,
+                FoodCategory.restaurant_id == category.restaurant_id,
                 FoodCategory.is_active.is_(True)
             )
         )
@@ -160,37 +238,43 @@ async def food_update_category_service(
         if duplicate_category:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Food category name already exists"
+                detail="Food category name already exists in this restaurant"
             )
 
         category.name = new_name
 
     # Update description
+
     if request.description is not None:
         category.description = request.description.strip()
 
     # Update image URL
+
     if request.img_url is not None:
         category.img_url = request.img_url.strip()
 
     # Update active status
+
     if request.is_active is not None:
         category.is_active = request.is_active
 
+    # Commit
     await db.commit()
     await db.refresh(category)
+
+    # Delete cache
+    await delete_cache("categories:all")
 
     return category
 
 async def food_delete_category_service(
-
+    category_id: int,
     user_id: int,
     db: AsyncSession
 ):
-    result = await db.execute(select(FoodCategory).where(
-        FoodCategory.user_id == user_id,
-            FoodCategory.is_active.is_(True)
-        )
+    result = await db.execute(
+        select(FoodCategory).where(FoodCategory.id == category_id,
+            FoodCategory.is_active.is_(True))
     )
 
     category = result.scalar_one_or_none()
@@ -204,6 +288,9 @@ async def food_delete_category_service(
     category.is_active = False
 
     await db.commit()
+
+    # Redis cache invalidation
+    await delete_cache("categories:all")
 
     return {
         "message": "Food category deleted successfully",

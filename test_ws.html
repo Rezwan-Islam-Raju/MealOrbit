@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Test</title>
+</head>
+<body>
+
+<h3>WebSocket Location Test</h3>
+<button onclick="connectWS()">Connect</button>
+
+<pre id="output"></pre>
+
+<script>
+function log(message) {
+    document.getElementById("output").textContent += message + "\n";
+}
+
+function connectWS() {
+    const ws = new WebSocket(
+        "ws://127.0.0.1:8000/api/v1/location-ws/6"
+    );
+
+    ws.onopen = function () {
+        log("WebSocket connected");
+    };
+
+    ws.onmessage = function (event) {
+        log("Location: " + event.data);
+    };
+
+    ws.onerror = function () {
+        log("WebSocket error");
+    };
+
+    ws.onclose = function () {
+        log("WebSocket closed");
+    };
+}
+</script>
+
+</body>
+</html>

@@ -31,12 +31,10 @@ async def create_food(
 
 
 @router.get("/",response_model=list[FoodResponse])
-async def get_foods(user_id:int=Depends(require_user_id),db:AsyncSession=Depends(get_db)):
+async def get_foods(db:AsyncSession=Depends(get_db)):
 
     foods= await get_food_service(
-        db=db,
-        user_id=user_id,
-
+        db=db
     )
     return foods
 
@@ -44,13 +42,13 @@ async def get_foods(user_id:int=Depends(require_user_id),db:AsyncSession=Depends
 @router.get("/search", response_model=list[FoodResponse])
 async def get_foods_search(
     query: str,
-    user_id: int = Depends(require_user_id),
+
     db: AsyncSession = Depends(get_db),
 ):
     result= await food_search_service(
         db=db,
-        query=query,
-        user_id=user_id
+        query=query
+
     )
     return result
 

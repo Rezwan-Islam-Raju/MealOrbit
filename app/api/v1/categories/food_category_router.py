@@ -46,9 +46,7 @@ async def create_category(
 
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+            status_code=status.HTTP_400_BAD_REQUEST,detail=str(e))
 
 #------ GET ALL CATEGORIES SERVICE API -------
 
@@ -116,15 +114,15 @@ async def update_category(
 
 @router.delete("/{category_id}")
 async def delete_category(
-
+    category_id: int,
     db: AsyncSession = Depends(get_db),
     user_id: int = Depends(require_user_id),
 ):
     try:
         result = await food_delete_category_service(
-            db=db,
-
-            user_id=user_id
+            category_id=category_id,
+            user_id=user_id,
+            db=db
         )
 
         return result
@@ -134,6 +132,4 @@ async def delete_category(
 
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+            status_code=status.HTTP_400_BAD_REQUEST,detail=str(e))

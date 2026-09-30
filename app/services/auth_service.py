@@ -6,11 +6,11 @@ from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-
-
+from app.tasks.email_tasks import send_email_task
+from tasks.email_tasks import send_password_reset_success_email
 from app.models.password_reset_token_model import PasswordResetToken
 from app.models.refresh_token_model import RefreshToken
-from app.models.user_model import User
+from app.models.user_model import  User
 from app.models.user_activation_token_model import UserActivationToken
 
 from app.schemas.user_schema import (
@@ -20,6 +20,7 @@ from app.schemas.user_schema import (
     UserResetPasswordResponse, UserChangePasswordRequest, UserChangePasswordResponse, UserLogoutResponse,
     UserLogoutRequest,
 )
+
 
 from config.config import (
     hash_password,
@@ -88,7 +89,6 @@ async def register_user_service(
         hashed_token = hash_activation_token(raw_token)
 
         # Token expires in 5 minutes
-
         token_expires_at = datetime.now() + timedelta(minutes=5)
 
         # Create activation token
@@ -103,12 +103,32 @@ async def register_user_service(
         # Save activation token
         await db.commit()
 
-        # For testing
-        activation_link = raw_token
+        # Send verification email through Celery
+        send_email_task.delay(
+            to_email=new_user.email,
+            subject="Verify Your Food Delivery Account",
+            body=f"""
+            
+Hello {new_user.first_name},
 
-        print(
-            f"ACTIVATION LINK FOR {new_user.email}: "
-            f"{activation_link}"
+Welcome to Food Delivery!
+
+Thank you for creating an account.
+
+Your email verification token is:
+
+{raw_token}
+
+This token will expire in 5 minutes.
+
+Please use this token to verify your email address.
+
+If you did not create this account, you can safely ignore this email.
+
+Regards,
+Food Delivery Team
+
+"""
         )
 
         return new_user
@@ -132,11 +152,12 @@ async def register_user_service(
         )
 
 
+
 #------Email Verification --------
 
 async def email_verification_service(
     token: str,
-    db: AsyncSession,
+    db: AsyncSession
 ):
     hashing_token = hash_activation_token(token)
 
@@ -293,107 +314,157 @@ async def login_user_service(
     )
 
 #-----Forget Password-------
-
-
-async def forgot_password_service(db: AsyncSession,request:UserForgotPasswordRequest):
-
+async def forgot_password_service(
+    db: AsyncSession,
+    request: UserForgotPasswordRequest
+):
     # Find user by email
 
-    result = await db.execute(select(User).where(User.email==request.email))
+    result = await db.execute(
+        select(User).where(User.email == request.email)
+    )
 
-    user= result.scalar_one_or_none()
+    user = result.scalar_one_or_none()
 
     if not user:
-      return UserForgotPasswordResponse(
-          message="If this email is registered, a password reset link has been sent."
-      )
+        return UserForgotPasswordResponse(
+            message="If this email is registered, a password reset link has been sent."
+        )
 
     # Generate raw reset token
 
-    raw_token= generate_reset_token()
+    raw_token = generate_reset_token()
 
     # Hash reset token
 
-    hash_token=hash_reset_token(raw_token)
+    hash_token = hash_reset_token(raw_token)
 
-    # Token expires is 30 minutes
+    # Token expires in 30 minutes
 
-    expires_at = (datetime.now() + timedelta(minutes=30))
+    expires_at = datetime.now() + timedelta(minutes=30)
 
     # Create password reset token
 
-    reset_token=PasswordResetToken(
+    reset_token = PasswordResetToken(
         user_id=user.id,
         token_hash=hash_token,
         expires_at=expires_at,
         created_at=datetime.now()
-
-
     )
+
     # Save token
+
     db.add(reset_token)
 
     await db.commit()
 
-    # Testing only
+    # Create reset link
+    reset_link = (
+        f"http://127.0.0.1:8000/api/v1/auth/password-reset"
+        f"?token={raw_token}"
+    )
 
-    print(f"Password reset link token for {user.email}: {raw_token}")
+    # Send email through Celery
+
+    send_email_task.delay(
+        to_email=user.email,
+        subject="Password Reset Request",
+        body=f"""
+        
+Hello {user.first_name} {user.last_name},
+
+We received a request to reset your Food Delivery account password.
+
+Your password reset token is:
+
+{raw_token}
+
+This token will expire in 30 minutes.
+
+Reset link:
+{reset_link}
+
+If you did not request a password reset, you can safely ignore this email.
+
+Regards,
+Food Delivery Team
+"""
+    )
 
     return UserForgotPasswordResponse(
         message="If this email is registered, a password reset link has been sent."
     )
 
-
 #-----Password reset-------
 
-
-async def password_reset_service(request:UserResetPasswordRequest,db:AsyncSession):
-
+async def password_reset_service(
+    request: UserResetPasswordRequest,
+    db: AsyncSession
+):
     # Check password reset confirmation
-
     if request.new_password != request.confirm_password:
-        raise HTTPException(status_code=400, detail="Passwords do not match")
+        raise HTTPException(
+            status_code=400,
+            detail="Passwords do not match"
+        )
 
     # Hash incoming reset token
-
     token_hash = hash_reset_token(request.token)
 
     # Find reset token
-    result = await db.execute(select(PasswordResetToken).where(PasswordResetToken.token_hash==token_hash))
+    result = await db.execute(
+        select(PasswordResetToken).where(
+            PasswordResetToken.token_hash == token_hash
+        )
+    )
+
     reset_token = result.scalar_one_or_none()
 
     if not reset_token:
-        raise HTTPException(status_code=400,detail="Invalid or expired password reset token")
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid or expired password reset token"
+        )
 
-
-    # Check token expire
-
+    # Check token expiration
     if reset_token.expires_at < datetime.now():
         await db.delete(reset_token)
         await db.commit()
-        raise HTTPException(status_code=400,detail="Password reset token expired")
+
+        raise HTTPException(
+            status_code=400,
+            detail="Password reset token expired"
+        )
 
     # Find user
-
-    result = await db.execute(select(User).where(User.id==reset_token.user_id))
+    result = await db.execute(
+        select(User).where(
+            User.id == reset_token.user_id
+        )
+    )
 
     user = result.scalar_one_or_none()
 
     if not user:
-        raise HTTPException(status_code=400,detail="User not found")
+        raise HTTPException(
+            status_code=400,
+            detail="User not found"
+        )
 
     # Hash new password
-
     user.password = hash_password(request.new_password)
     user.updated_at = datetime.now()
 
     # Delete used reset token
-
     await db.delete(reset_token)
 
-    #  Revoke all existing refresh tokens
-
-    result = await db.execute(select(RefreshToken).where(RefreshToken.user_id==user.id),RefreshToken.is_revoked==False)
+    # Revoke all existing refresh tokens
+    result = await db.execute(
+        select(RefreshToken).where(
+            RefreshToken.user_id == user.id,
+            RefreshToken.is_revoked == False
+        )
+    )
 
     refresh_tokens = result.scalars().all()
 
@@ -401,13 +472,19 @@ async def password_reset_service(request:UserResetPasswordRequest,db:AsyncSessio
         refresh_token.is_revoked = True
         refresh_token.revoked_at = datetime.now()
 
-    # save Everything
-
+    # Save everything
     await db.commit()
 
-    return UserResetPasswordResponse(
-       message= "Password Reset Successfully"
+    # Send password reset success email
+    send_password_reset_success_email.delay(
+        to_email=user.email,
+        user_name=f"{user.first_name} {user.last_name}",
     )
+
+    return UserResetPasswordResponse(
+        message="Password Reset Successfully"
+    )
+
 
 
 # ----Change Password-----

@@ -17,3 +17,4 @@ from app.models.delivery_model import  Delivery
 
 from app.models.order_model import Order, OrderItem
 from app.models.payment_model import Payment
+from app.models.review_model import Review
