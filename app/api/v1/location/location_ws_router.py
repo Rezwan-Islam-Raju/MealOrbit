@@ -7,11 +7,7 @@ router = APIRouter()
 
 
 
-
-
-
-
-
+#---------- RIDER LOCATION WEBSOCKET API -----------
 
 @router.websocket("/{delivery_id}")
 async def rider_location_websocket(

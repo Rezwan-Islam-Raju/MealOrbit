@@ -32,19 +32,18 @@ async def create_payment_service(
     db: AsyncSession,
     user_id: int,
     order_id: int,
-    payment_method: str,
+    payment_method: str
 ):
 
 
     #  Normalize payment method
-
 
     payment_method = payment_method.strip().lower()
 
     if payment_method != "sslcommerz":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Payment method must be sslcommerz",
+            detail="Payment method must be sslcommerz"
         )
 
 
@@ -54,7 +53,7 @@ async def create_payment_service(
     result = await db.execute(
         select(Order).where(
             Order.id == order_id,
-            Order.user_id == user_id,
+            Order.user_id == user_id
         )
     )
 
@@ -63,7 +62,7 @@ async def create_payment_service(
     if order is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Order not found",
+            detail="Order not found"
         )
 
 
@@ -72,7 +71,7 @@ async def create_payment_service(
 
     if order.status not in (
         OrderStatus.PENDING,
-        OrderStatus.CONFIRMED,
+        OrderStatus.CONFIRMED
     ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -85,7 +84,6 @@ async def create_payment_service(
 
     #  Get user
 
-
     result = await db.execute(
         select(User).where(
             User.id == user_id
@@ -97,7 +95,7 @@ async def create_payment_service(
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
+            detail="User not found"
         )
 
 
@@ -122,7 +120,7 @@ async def create_payment_service(
     if existing_payment is not None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Payment already exists for this order",
+            detail="Payment already exists for this order"
         )
 
 
@@ -139,7 +137,7 @@ async def create_payment_service(
         amount=order.total_amount,
         payment_method="sslcommerz",
         transaction_id=transaction_id,
-        status="pending",
+        status="pending"
     )
 
     db.add(payment)
@@ -155,12 +153,11 @@ async def create_payment_service(
 
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to create payment",
+            detail="Failed to create payment"
         )
 
 
     #  Customer information
-
 
     full_name = (
         f"{user.first_name} {user.last_name}"
@@ -185,9 +182,7 @@ async def create_payment_service(
         str(order.total_amount)
     )
 
-
     #  SSLCOMMERZ payload
-
 
     payload = {
         "store_id": SSLCOMMERZ_STORE_ID,
@@ -215,12 +210,11 @@ async def create_payment_service(
 
         "product_name": "Ecommerce Order",
         "product_category": "General",
-        "product_profile": "general",
+        "product_profile": "general"
     }
 
 
     #  Call SSLCOMMERZ
-
 
     try:
 
@@ -229,7 +223,7 @@ async def create_payment_service(
             response = await client.post(
                 SSLCOMMERZ_PAYMENT_URL,
                 data=payload,
-                timeout=30,
+                timeout=30
             )
 
             response.raise_for_status()
@@ -239,7 +233,7 @@ async def create_payment_service(
     except (
         httpx.HTTPStatusError,
         httpx.RequestError,
-        ValueError,
+        ValueError
     ):
 
         payment.status = "failed"
@@ -250,7 +244,6 @@ async def create_payment_service(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="SSLCOMMERZ API Error",
         )
-
 
     #  Check SSLCOMMERZ response
 
@@ -303,7 +296,7 @@ async def create_payment_service(
         "amount": float(payment.amount),
         "transaction_id": payment.transaction_id,
         "payment_url": payment_url,
-        "status": payment.status,
+        "status": payment.status
     }
 
 
@@ -314,7 +307,7 @@ async def payment_success_service(
     db: AsyncSession,
     tran_id: str,
     val_id: str,
-    payment_status: str,
+    payment_status: str
 ):
     print("Callback status:", payment_status)
 
@@ -340,14 +333,14 @@ async def payment_success_service(
             "payment_id": payment.id,
             "order_id": payment.order_id,
             "transaction_id": payment.transaction_id,
-            "status": payment.status,
+            "status": payment.status
         }
 
     # Validate val_id
     if not val_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Validation ID is required",
+            detail="Validation ID is required"
         )
 
     # Find order
@@ -362,7 +355,7 @@ async def payment_success_service(
     if order is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Order not found",
+            detail="Order not found"
         )
 
     # SSLCOMMERZ Validation API
@@ -370,7 +363,7 @@ async def payment_success_service(
         "val_id": val_id,
         "store_id": SSLCOMMERZ_STORE_ID,
         "store_passwd": SSLCOMMERZ_STORE_PASSWORD,
-        "format": "json",
+        "format": "json"
     }
 
     try:
@@ -379,7 +372,7 @@ async def payment_success_service(
             response = await client.get(
                 SSLCOMMERZ_VALIDATION_URL,
                 params=validation_params,
-                timeout=30,
+                timeout=30
             )
 
             response.raise_for_status()
@@ -389,11 +382,11 @@ async def payment_success_service(
     except (
         httpx.HTTPStatusError,
         httpx.RequestError,
-        ValueError,
+        ValueError
     ):
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="SSLCOMMERZ validation failed",
+            detail="SSLCOMMERZ validation failed"
         )
 
     # Check SSLCOMMERZ validation status
@@ -401,7 +394,7 @@ async def payment_success_service(
 
     if ssl_status not in (
         "VALID",
-        "VALIDATED",
+        "VALIDATED"
     ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -417,13 +410,13 @@ async def payment_success_service(
     if not validated_tran_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Transaction ID missing from SSLCOMMERZ validation",
+            detail="Transaction ID missing from SSLCOMMERZ validation"
         )
 
     if validated_tran_id != payment.transaction_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Transaction ID verification failed",
+            detail="Transaction ID verification failed"
         )
 
     # Verify amount
@@ -432,7 +425,7 @@ async def payment_success_service(
     if validated_amount_raw is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Payment amount missing from SSLCOMMERZ validation",
+            detail="Payment amount missing from SSLCOMMERZ validation"
         )
 
     try:
@@ -447,13 +440,13 @@ async def payment_success_service(
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid payment amount received from SSLCOMMERZ",
+            detail="Invalid payment amount received from SSLCOMMERZ"
         )
 
     if validated_amount != payment_amount:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Payment amount verification failed",
+            detail="Payment amount verification failed"
         )
 
     # Verify currency
@@ -462,7 +455,7 @@ async def payment_success_service(
     if currency != "BDT":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Payment currency verification failed",
+            detail="Payment currency verification failed"
         )
 
     # Mark payment as paid
@@ -483,7 +476,7 @@ async def payment_success_service(
 
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to confirm payment",
+            detail="Failed to confirm payment"
         )
 
     # Publish payment notification event
@@ -505,7 +498,7 @@ async def payment_success_service(
         "transaction_id": payment.transaction_id,
         "status": payment.status,
         "order_status": order.status.value,
-        "validation_status": ssl_status,
+        "validation_status": ssl_status
     }
 
 
@@ -513,7 +506,7 @@ async def payment_success_service(
 
 async def payment_fail_service(
     db: AsyncSession,
-    tran_id: str,
+    tran_id: str
 ):
     # Find payment
     result = await db.execute(
@@ -527,7 +520,7 @@ async def payment_fail_service(
     if payment is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Payment not found",
+            detail="Payment not found"
         )
 
     # Already paid payment cannot become failed
@@ -537,7 +530,7 @@ async def payment_fail_service(
             "payment_id": payment.id,
             "order_id": payment.order_id,
             "transaction_id": payment.transaction_id,
-            "status": payment.status,
+            "status": payment.status
         }
 
     # Mark payment as failed
@@ -552,7 +545,7 @@ async def payment_fail_service(
 
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to update payment status",
+            detail="Failed to update payment status"
         )
 
     return {
@@ -560,7 +553,7 @@ async def payment_fail_service(
         "payment_id": payment.id,
         "order_id": payment.order_id,
         "transaction_id": payment.transaction_id,
-        "status": payment.status,
+        "status": payment.status
     }
 
 
@@ -569,7 +562,7 @@ async def payment_fail_service(
 
 async def payment_cancel_service(
     db: AsyncSession,
-    tran_id: str,
+    tran_id: str
 ):
     # Find payment
     result = await db.execute(
@@ -583,7 +576,7 @@ async def payment_cancel_service(
     if payment is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Payment not found",
+            detail="Payment not found"
         )
 
     # Already paid payment cannot become cancelled
@@ -593,7 +586,7 @@ async def payment_cancel_service(
             "payment_id": payment.id,
             "order_id": payment.order_id,
             "transaction_id": payment.transaction_id,
-            "status": payment.status,
+            "status": payment.status
         }
 
     # Mark payment as cancelled
@@ -608,7 +601,7 @@ async def payment_cancel_service(
 
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to update payment status",
+            detail="Failed to update payment status"
         )
 
     return {
@@ -616,7 +609,7 @@ async def payment_cancel_service(
         "payment_id": payment.id,
         "order_id": payment.order_id,
         "transaction_id": payment.transaction_id,
-        "status": payment.status,
+        "status": payment.status
     }
 
 
@@ -627,7 +620,7 @@ async def payment_ipn_service(
     db: AsyncSession,
     tran_id: str,
     val_id: str,
-    payment_status: str,
+    payment_status: str
 ):
     # Find payment
     result = await db.execute(
@@ -641,7 +634,7 @@ async def payment_ipn_service(
     if payment is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Payment not found",
+            detail="Payment not found"
         )
 
     # Already paid
@@ -651,7 +644,7 @@ async def payment_ipn_service(
             "payment_id": payment.id,
             "order_id": payment.order_id,
             "transaction_id": payment.transaction_id,
-            "status": payment.status,
+            "status": payment.status
         }
 
     # IPN status must be successful
@@ -670,7 +663,7 @@ async def payment_ipn_service(
                 "message": "Payment status not processed",
                 "payment_id": payment.id,
                 "transaction_id": payment.transaction_id,
-                "status": payment_status,
+                "status": payment_status
             }
 
         await db.commit()
@@ -681,14 +674,14 @@ async def payment_ipn_service(
             "payment_id": payment.id,
             "order_id": payment.order_id,
             "transaction_id": payment.transaction_id,
-            "status": payment.status,
+            "status": payment.status
         }
 
     # val_id required for successful transaction
     if not val_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Validation ID is required",
+            detail="Validation ID is required"
         )
 
     # Find order
@@ -703,7 +696,7 @@ async def payment_ipn_service(
     if order is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Order not found",
+            detail="Order not found"
         )
 
     # Validate with SSLCOMMERZ
@@ -711,7 +704,7 @@ async def payment_ipn_service(
         "val_id": val_id,
         "store_id": SSLCOMMERZ_STORE_ID,
         "store_passwd": SSLCOMMERZ_STORE_PASSWORD,
-        "format": "json",
+        "format": "json"
     }
 
     try:
@@ -719,7 +712,7 @@ async def payment_ipn_service(
             response = await client.get(
                 SSLCOMMERZ_VALIDATION_URL,
                 params=validation_params,
-                timeout=30,
+                timeout=30
             )
 
             response.raise_for_status()
@@ -729,11 +722,11 @@ async def payment_ipn_service(
     except (
         httpx.HTTPStatusError,
         httpx.RequestError,
-        ValueError,
+        ValueError
     ):
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="SSLCOMMERZ validation failed",
+            detail="SSLCOMMERZ validation failed"
         )
 
     # Check validation status
@@ -741,7 +734,7 @@ async def payment_ipn_service(
 
     if ssl_status not in (
         "VALID",
-        "VALIDATED",
+        "VALIDATED"
     ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -757,7 +750,7 @@ async def payment_ipn_service(
     if validated_tran_id != payment.transaction_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Transaction ID verification failed",
+            detail="Transaction ID verification failed"
         )
 
     # Verify amount
@@ -766,7 +759,7 @@ async def payment_ipn_service(
     if validated_amount_raw is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Payment amount missing from SSLCOMMERZ validation",
+            detail="Payment amount missing from SSLCOMMERZ validation"
         )
 
     try:
@@ -781,20 +774,20 @@ async def payment_ipn_service(
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid payment amount",
+            detail="Invalid payment amount"
         )
 
     if validated_amount != payment_amount:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Payment amount verification failed",
+            detail="Payment amount verification failed"
         )
 
     # Verify currency
     if validation_data.get("currency") != "BDT":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Payment currency verification failed",
+            detail="Payment currency verification failed"
         )
 
     # Mark paid
@@ -812,7 +805,7 @@ async def payment_ipn_service(
 
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to confirm IPN payment",
+            detail="Failed to confirm IPN payment"
         )
 
     return {
@@ -822,5 +815,5 @@ async def payment_ipn_service(
         "transaction_id": payment.transaction_id,
         "status": payment.status,
         "order_status": order.status.value,
-        "validation_status": ssl_status,
+        "validation_status": ssl_status
     }

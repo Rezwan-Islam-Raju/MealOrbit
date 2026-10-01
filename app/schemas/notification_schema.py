@@ -22,7 +22,6 @@ class NotificationResponse(BaseModel):
     updated_at: datetime
 
 
-
 class NotificationMessageResponse(BaseModel):
     message: str
 

@@ -25,42 +25,44 @@ router = APIRouter(
 )
 
 
+#---------- CREATE REVIEW API ----------
 @router.post(
     "/",
-    response_model=ReviewResponse,
-    status_code=201,
+    response_model=ReviewResponse
 )
 async def create_review(
     request: ReviewCreateRequest,
     db: AsyncSession = Depends(get_db),
-    user_id: int = Depends(require_user_id),
+    user_id: int = Depends(require_user_id)
 ):
     result= await create_review_service(
         db=db,
         user_id=user_id,
-        request=request,
+        request=request
     )
     return result
 
 
+#--------- GET MY REVIEWS API ----------
 @router.get(
     "/my",
-    response_model=List[ReviewResponse],
+    response_model=List[ReviewResponse]
 )
 async def get_my_reviews(
     db: AsyncSession = Depends(get_db),
-    user_id: int = Depends(require_user_id),
+    user_id: int = Depends(require_user_id)
 ):
     result= await get_my_reviews_service(
         db=db,
-        user_id=user_id,
+        user_id=user_id
     )
     return result
 
 
+#----------- GET FOOD REVIEWS API -----------
 @router.get(
     "/food/{food_id}",
-    response_model=List[ReviewResponse],
+    response_model=List[ReviewResponse]
 )
 async def get_food_reviews(
     food_id: int,
@@ -68,25 +70,29 @@ async def get_food_reviews(
 ):
     result= await get_food_reviews_service(
         db=db,
-        food_id=food_id,
+        food_id=food_id
     )
     return result
 
+
+#------------ GET REVIEW API ----------
 
 @router.get(
     "/{review_id}",
-    response_model=ReviewResponse,
+    response_model=ReviewResponse
 )
 async def get_review(
     review_id: int,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db)
 ):
     result= await get_review_by_id_service(
         db=db,
-        review_id=review_id,
+        review_id=review_id
     )
     return result
 
+
+#----------- UPDATE REVIEW API ----------
 
 @router.put(
     "/{review_id}",
@@ -96,16 +102,18 @@ async def update_review(
     review_id: int,
     request: ReviewUpdateRequest,
     db: AsyncSession = Depends(get_db),
-    user_id: int = Depends(require_user_id),
+    user_id: int = Depends(require_user_id)
 ):
     result= await update_review_service(
         db=db,
         user_id=user_id,
         review_id=review_id,
-        request=request,
+        request=request
     )
     return result
 
+
+#----------- DELETE REVIEW API -----------
 
 @router.delete(
     "/{review_id}",
@@ -113,12 +121,12 @@ async def update_review(
 async def delete_review(
     review_id: int,
     db: AsyncSession = Depends(get_db),
-    user_id: int = Depends(require_user_id),
+    user_id: int = Depends(require_user_id)
 ):
     result= await delete_review_service(
         db=db,
         user_id=user_id,
-        review_id=review_id,
+        review_id=review_id
     )
     return result
 

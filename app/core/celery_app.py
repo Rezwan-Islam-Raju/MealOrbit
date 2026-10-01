@@ -15,30 +15,26 @@ celery_app.conf.update(
     accept_content=["json"],
     result_serializer="json",
     timezone="Asia/Dhaka",
-    enable_utc=False,
+    enable_utc=False
 )
 
-
-# =========================================================
-# General Email Notification
-# =========================================================
+#--------- General Email Notification --------
 
 @celery_app.task
 def send_notification_email(
     email: str,
     title: str,
-    message: str,
+    message: str
 ):
     send_email(
         to_email=email,
         subject=title,
-        body=message,
+        body=message
     )
 
 
-# =========================================================
-# Order Confirmation Email
-# =========================================================
+
+#--------- ------ Order Confirmation Email -------------
 
 @celery_app.task(
     name="send_order_confirmation_email"
@@ -78,18 +74,17 @@ Food Delivery Team
     send_email(
         to_email=customer_email,
         subject=subject,
-        body=message,
+        body=message
     )
 
     return {
         "order_id": order_id,
-        "status": "success",
+        "status": "success"
     }
 
 
-# =========================================================
-# Order Status Notification
-# =========================================================
+
+#------------ ------ Order Status Notification -------------
 
 @celery_app.task(
     name="send_order_status_notification"
@@ -101,9 +96,7 @@ def send_order_status_notification(
 ):
     notifications = {
 
-        # -------------------------------------------------
         # Preparing
-        # -------------------------------------------------
 
         "PREPARING": {
             "title": "Order Preparing",
@@ -113,9 +106,7 @@ def send_order_status_notification(
             ),
         },
 
-        # -------------------------------------------------
         # Ready
-        # -------------------------------------------------
 
         "READY": {
             "title": "Order Ready",
@@ -125,9 +116,7 @@ def send_order_status_notification(
             ),
         },
 
-        # -------------------------------------------------
         # Rider Assigned
-        # -------------------------------------------------
 
         "RIDER_ASSIGNED": {
             "title": "Rider Assigned",
@@ -138,9 +127,7 @@ def send_order_status_notification(
             ),
         },
 
-        # -------------------------------------------------
         # Cancelled
-        # -------------------------------------------------
 
         "CANCELLED": {
             "title": "Order Cancelled",
@@ -177,6 +164,6 @@ def send_order_status_notification(
 
     return {
         "success": True,
-        "notification": notification_data,
+        "notification": notification_data
     }
 

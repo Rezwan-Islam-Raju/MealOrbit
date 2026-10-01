@@ -29,8 +29,7 @@ async def build_cart_response_data(
         db: AsyncSession,
         cart: Cart
 ):
-    result = await db.execute(
-        select(CartItem, Food)
+    result = await db.execute(select(CartItem, Food)
         .join(Food, CartItem.food_id == Food.id)
         .where(CartItem.cart_id == cart.id)
     )

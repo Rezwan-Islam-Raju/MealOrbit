@@ -10,7 +10,7 @@ from app.schemas.rider_schema import RiderCreateRequest, RiderUpdateRequest
 async def create_rider_service(
     db: AsyncSession,
     user_id: int,
-    request: RiderCreateRequest,
+    request: RiderCreateRequest
 ):
     # Check user
     result = await db.execute(
@@ -21,7 +21,7 @@ async def create_rider_service(
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
+            detail="User not found"
         )
 
     # Check existing rider
@@ -32,7 +32,7 @@ async def create_rider_service(
     if existing_rider:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Rider profile already exists",
+            detail="Rider profile already exists"
         )
 
     rider = Rider(
@@ -49,7 +49,7 @@ async def create_rider_service(
         ),
         is_online=False,
         is_available=True,
-        is_active=True,
+        is_active=True
     )
 
     db.add(rider)
@@ -68,7 +68,7 @@ async def get_my_rider_service(
     result = await db.execute(
         select(Rider).where(
             Rider.user_id == user_id,
-            Rider.is_active.is_(True),
+            Rider.is_active.is_(True)
         )
     )
 
@@ -77,7 +77,7 @@ async def get_my_rider_service(
     if not rider:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Rider profile not found",
+            detail="Rider profile not found"
         )
 
     return rider
@@ -87,12 +87,12 @@ async def get_my_rider_service(
 async def update_rider_service(
     db: AsyncSession,
     user_id: int,
-    request: RiderUpdateRequest,
+    request: RiderUpdateRequest
 ):
     result = await db.execute(
         select(Rider).where(
             Rider.user_id == user_id,
-            Rider.is_active.is_(True),
+            Rider.is_active.is_(True)
         )
     )
 
@@ -101,7 +101,7 @@ async def update_rider_service(
     if not rider:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Rider profile not found",
+            detail="Rider profile not found"
         )
 
     if request.phone is not None:
@@ -123,12 +123,12 @@ async def update_rider_status_service(
     db: AsyncSession,
     user_id: int,
     is_online: bool,
-    is_available: bool,
+    is_available: bool
 ):
     result = await db.execute(
         select(Rider).where(
             Rider.user_id == user_id,
-            Rider.is_active.is_(True),
+            Rider.is_active.is_(True)
         )
     )
 
@@ -137,7 +137,7 @@ async def update_rider_status_service(
     if not rider:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Rider profile not found",
+            detail="Rider profile not found"
         )
 
     rider.is_online = is_online
@@ -151,12 +151,12 @@ async def update_rider_status_service(
 
 async def rider_deactivate_service(
     db: AsyncSession,
-    user_id: int,
+    user_id: int
 ):
     result = await db.execute(
         select(Rider).where(
             Rider.user_id == user_id,
-            Rider.is_active.is_(True),
+            Rider.is_active.is_(True)
         )
     )
 
@@ -165,7 +165,7 @@ async def rider_deactivate_service(
     if not rider:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Rider not found",
+            detail="Rider not found"
         )
 
     # Soft deactivate

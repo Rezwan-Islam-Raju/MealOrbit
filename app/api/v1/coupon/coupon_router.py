@@ -8,12 +8,13 @@ from config.database import get_db
 
 router = APIRouter()
 
+#--------- CREATE COUPON API -------------
 
 @router.post("/", response_model=CouponResponse)
 async def create_coupon(
     request: CouponCreateRequest,
     admin_id: int = Depends(require_user_id),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db)
 ):
     result = await create_coupon_service(
         db=db,
@@ -22,6 +23,9 @@ async def create_coupon(
 
     )
     return result
+
+
+#------- GET COUPONS API ---------
 
 @router.get("/", response_model=list[CouponResponse])
 async def get_coupons(

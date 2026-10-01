@@ -18,10 +18,15 @@ from config.database import get_db
 router = APIRouter()
 
 
-@router.get("/", response_model=CartResponse)
+
+#--------- GET CART API---------
+
+@router.get("/",
+            response_model=CartResponse
+)
 async def get_cart(
         user_id: int = Depends(require_user_id),
-        db: AsyncSession = Depends(get_db),
+        db: AsyncSession = Depends(get_db)
 ):
     result = await get_cart_service(
         db=db,
@@ -30,11 +35,16 @@ async def get_cart(
     return result
 
 
-@router.post("/items", response_model=CartResponse)
+
+#---------- ADD TO CART API --------------
+
+@router.post("/items",
+             response_model=CartResponse
+)
 async def add_to_cart(
         request: CartItemCreateRequest,
         user_id: int = Depends(require_user_id),
-        db: AsyncSession = Depends(get_db),
+        db: AsyncSession = Depends(get_db)
 ):
     result = await add_to_cart_service(
         db=db,
@@ -43,13 +53,16 @@ async def add_to_cart(
     )
     return result
 
+#---------- UPDATE CART ITEM API----------
 
-@router.patch("/items/{item_id}", response_model=CartResponse)
+@router.patch("/items/{item_id}",
+              response_model=CartResponse
+)
 async def update_cart_item(
         item_id: int,
         request: CartItemUpdateRequest,
         user_id: int = Depends(require_user_id),
-        db: AsyncSession = Depends(get_db),
+        db: AsyncSession = Depends(get_db)
 ):
     result = await update_cart_item_service(
         db=db,
@@ -59,12 +72,13 @@ async def update_cart_item(
     )
     return result
 
+#-------- REMOVE CART ITEM API ----------
 
 @router.delete("/items/{item_id}", response_model=CartResponse)
 async def remove_cart_item(
         item_id: int,
         user_id: int = Depends(require_user_id),
-        db: AsyncSession = Depends(get_db),
+        db: AsyncSession = Depends(get_db)
 ):
     result = await remove_cart_item_service(
         db=db,
@@ -73,12 +87,13 @@ async def remove_cart_item(
     )
     return result
 
+#-------- APPLY COUPON API----------
 
 @router.post("/apply-coupon", response_model=CartResponse)
 async def apply_coupon(
         request: ApplyCouponRequest,
         user_id: int = Depends(require_user_id),
-        db: AsyncSession = Depends(get_db),
+        db: AsyncSession = Depends(get_db)
 ):
     result = await apply_coupon_service(
         db=db,
@@ -87,11 +102,12 @@ async def apply_coupon(
     )
     return result
 
+#----------- REMOVE COUPON  API ----------
 
 @router.delete("/remove-coupon", response_model=CartResponse)
 async def remove_coupon(
         user_id: int = Depends(require_user_id),
-        db: AsyncSession = Depends(get_db),
+        db: AsyncSession = Depends(get_db)
 ):
     result = await remove_coupon_service(
         db=db,
@@ -99,11 +115,12 @@ async def remove_coupon(
     )
     return result
 
+#---------- CLEAR CART API ------------
 
 @router.delete("/", response_model=CartResponse)
 async def clear_cart(
         user_id: int = Depends(require_user_id),
-        db: AsyncSession = Depends(get_db),
+        db: AsyncSession = Depends(get_db)
 ):
     result = await clear_cart_service(
         db=db,

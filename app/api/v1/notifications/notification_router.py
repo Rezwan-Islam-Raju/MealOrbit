@@ -18,26 +18,27 @@ router = APIRouter()
 
 
 
-# CREATE NOTIFICATION
+#------------- CREATE NOTIFICATION API ---------
+
 @router.post(
     "/",
     response_model=NotificationResponse,
-    status_code=status.HTTP_201_CREATED,
+    status_code=status.HTTP_201_CREATED
 )
 async def create_notification(
     request: NotificationCreateRequest,
     user_id: int = Depends(require_user_id),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db)
 ):
     notification = await create_order_notification_service(
         db=db,
         user_id=user_id,
-        request=request,
+        request=request
     )
 
     return notification
 
-# GET MY NOTIFICATIONS
+#--------- GET MY NOTIFICATIONS API ---------
 
 @router.get("/my",response_model=list[NotificationResponse])
 async def get_my_notifications(
@@ -51,10 +52,10 @@ async def get_my_notifications(
     )
     return result
 
-# GET UNREAD NOTIFICATIONS
+#---------- GET UNREAD NOTIFICATIONS API ----------
 
 @router.get("/unread",
-       response_model = list[NotificationResponse],
+       response_model = list[NotificationResponse]
 )
 async def get_unread_notifications(
         user_id:int = Depends(require_user_id),
@@ -66,7 +67,8 @@ async def get_unread_notifications(
     )
     return result
 
-# GET UNREAD COUNT
+
+#---------- GET UNREAD COUNT API -----------
 
 @router.get(
     "/unread/count",
@@ -83,58 +85,58 @@ async def get_unread_count_notifications(
     )
     return result
 
-# MARK AS READ
+#------------ MARK AS READ API -----------
 
 @router.patch(
     "/{notification_id}/read",
-    response_model=NotificationResponse,
+    response_model=NotificationResponse
 )
 async def mark_notification_as_read(
     notification_id: int,
     db: AsyncSession = Depends(get_db),
-    user_id: int = Depends(require_user_id),
+    user_id: int = Depends(require_user_id)
 ):
     result= await mark_notifications_as_read_service(
         db=db,
         user_id=user_id,
-        notification_id=notification_id,
+        notification_id=notification_id
     )
     return result
 
 
 
-# MARK ALL AS READ
+#----------- MARK ALL AS READ API ---------
 
 @router.patch(
     "/read-all",
-    response_model=NotificationMessageResponse,
+    response_model=NotificationMessageResponse
 )
 async def mark_all_notifications_as_read(
     db: AsyncSession = Depends(get_db),
-    user_id: int = Depends(require_user_id),
+    user_id: int = Depends(require_user_id)
 ):
     result= await mark_all_notification_as_read_service(
         db=db,
-        user_id=user_id,
+        user_id=user_id
     )
     return result
 
 
 
-# DELETE NOTIFICATION
+#---------- DELETE NOTIFICATION API -----------
 
 @router.delete(
     "/{notification_id}",
-    response_model=NotificationMessageResponse,
+    response_model=NotificationMessageResponse
 )
 async def delete_notification(
     notification_id: int,
     db: AsyncSession = Depends(get_db),
-    user_id: int = Depends(require_user_id),
+    user_id: int = Depends(require_user_id)
 ):
     result= await delete_notification_service(
         db=db,
         user_id=user_id,
-        notification_id=notification_id,
+        notification_id=notification_id
     )
     return result

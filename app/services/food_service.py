@@ -19,9 +19,7 @@ async def create_food_service(
     user_id: int
 ):
     # Get current user
-    user_result = await db.execute(
-        select(User).where(
-            User.id == user_id,
+    user_result = await db.execute(select(User).where(User.id == user_id,
             User.is_active.is_(True)
         )
     )
@@ -44,8 +42,7 @@ async def create_food_service(
         )
 
     elif user.role == UserRoleEnum.RESTAURANT_OWNER:
-        restaurant_result = await db.execute(
-            select(Restaurant).where(
+        restaurant_result = await db.execute( select(Restaurant).where(
                 Restaurant.id == request.restaurant_id,
                 Restaurant.owner_id == user_id,
                 Restaurant.is_active.is_(True)
@@ -453,7 +450,7 @@ async def food_update_availability_service(
 async def get_foods_service(
         db: AsyncSession,
         page: int = 1,
-        limit: int = 10,
+        limit: int = 10
 ):
     # Redis cache key
     cache_key = f"foods:pagination:page:{page}:limit:{limit}"
@@ -506,14 +503,14 @@ async def get_foods_service(
                 "description": food.description,
                 "price": food.price,
                 "image_url": food.image_url,
-                "is_available": food.is_available,
+                "is_available": food.is_available
             }
             for food in foods
         ],
         "total": total,
         "page": page,
         "limit": limit,
-        "total_pages": total_pages,
+        "total_pages": total_pages
     }
 
     #  Save response in Redis

@@ -12,6 +12,7 @@ from config.database import get_db
 
 router = APIRouter()
 
+#---------- CREATE FOOD API -----------
 
 @router.post("/",response_model=FoodResponse)
 async def create_food(
@@ -24,11 +25,12 @@ async def create_food(
     food= await create_food_service(
         db=db,
         user_id=user_id,
-        request=request,
+        request=request
     )
     return food
 
 
+#----------- GET FOODS API -----------
 
 @router.get("/",response_model=list[FoodResponse])
 async def get_foods(db:AsyncSession=Depends(get_db)):
@@ -39,11 +41,12 @@ async def get_foods(db:AsyncSession=Depends(get_db)):
     return foods
 
 
+#----------- GET FOODS SEARCH API  ----------
+
 @router.get("/search", response_model=list[FoodResponse])
 async def get_foods_search(
     query: str,
-
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db)
 ):
     result= await food_search_service(
         db=db,
@@ -54,6 +57,7 @@ async def get_foods_search(
 
 
 
+#--------- FILTER FOOD API ---------
 
 @router.get("/filter",response_model=list[FoodResponse])
 async def filter_food(
@@ -76,6 +80,8 @@ async def filter_food(
     return foods
 
 
+#---------- GET FOOD PAGINATION API ----------
+
 @router.get("/pagination",response_model=FoodPaginationResponse)
 async def get_food_pagination(
         page:int =Query(1,ge=1),
@@ -90,6 +96,8 @@ async def get_food_pagination(
     return result
 
 
+#------------ GET FOOD BY ID API --------
+
 @router.get("/{food_id}",response_model=FoodResponse)
 async def get_food_by_id(
 food_id:int,db:AsyncSession=Depends(get_db),
@@ -102,12 +110,15 @@ user_id:int=Depends(require_user_id)
     )
     return food
 
+
+#---------- UPDATE FOOD API ----------
+
 @router.patch("/{food_id}", response_model=FoodResponse)
 async def update_food(
     food_id: int,
     request: FoodUpdateRequest,
     user_id: int = Depends(require_user_id),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db)
 ):
     result= await food_update_by_id_service(
         db=db,
@@ -118,8 +129,14 @@ async def update_food(
 
     return result
 
+#--------- DELETE FOOD API ---------
+
 @router.delete("/{food_id}")
-async def delete_food(food_id:int,user_id:int=Depends(require_user_id),db:AsyncSession=Depends(get_db)):
+async def delete_food(
+        food_id:int,
+        user_id:int=Depends(require_user_id),
+        db:AsyncSession=Depends(get_db)
+):
 
     result= await food_delete_by_id_service(
           db=db,
@@ -132,6 +149,9 @@ async def delete_food(food_id:int,user_id:int=Depends(require_user_id),db:AsyncS
 
 
 # sudhu restaurant owner er joonno
+
+
+#--------- UPDATE FOOD AVAILABILITY API ---------
 
 @router.patch("/{food_id}/availability", response_model=FoodResponse)
 async def update_food_availability(

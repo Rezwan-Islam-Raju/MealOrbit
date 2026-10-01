@@ -43,8 +43,8 @@ class Restaurant(Base):
 
     image_url = Column(String(500),nullable=True)
 
-    status = Column(Enum(StatusEnum,name="restaurant_status"),nullable=False,default=StatusEnum.CLOSED,
-        server_default="CLOSED",index=True)
+    status = Column(Enum(StatusEnum,name="restaurant_status"),nullable=False,
+        default=StatusEnum.CLOSED,server_default="CLOSED",index=True)
 
     is_active = Column(Boolean,nullable=False,default=True,server_default="true",
         index=True)

@@ -7,7 +7,7 @@ from app.services.payment_service import SSLCOMMERZ_STORE_ID, SSLCOMMERZ_STORE_P
 async def initiate_sslcommerz_payment(
     payment_id: int,
     order_id: int,
-    amount: float,
+    amount: float
 ):
     tran_id = f"PAY-{payment_id}-ORDER-{order_id}"
 
@@ -34,7 +34,7 @@ async def initiate_sslcommerz_payment(
         "shipping_method": "NO",
         "product_name": "Ecommerce Order",
         "product_category": "General",
-        "product_profile": "general",
+        "product_profile": "general"
     }
 
     async with httpx.AsyncClient() as client:

@@ -19,20 +19,11 @@ class FoodUpdateRequest(BaseModel):
     price:float
 
 
-
 class FoodAvailabilityRequest(BaseModel):
     is_available: bool
 
 
 # ---------- Response Schemas ----------
-
-
-class FoodPaginationResponse(BaseModel):
-    items:list[FoodResponse]
-    total:int
-    page:int
-    limit:int
-    total_pages:int
 
 class FoodResponse(BaseModel):
     id:int
@@ -42,3 +33,11 @@ class FoodResponse(BaseModel):
     description:str
     price:float
     is_available:bool
+
+
+class FoodPaginationResponse(BaseModel):
+    items:list[FoodResponse]
+    total:int
+    page:int
+    limit:int
+    total_pages:int

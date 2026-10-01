@@ -207,7 +207,7 @@ async def create_order_from_cart_service(
         send_order_confirmation_email.delay(
             customer_email=customer.email,
             order_id=order.id,
-            order_items=order_items_data,
+            order_items=order_items_data
         )
 
     # Reload order with items
@@ -249,7 +249,7 @@ async def get_my_order_by_id_service(
     result = await db.execute(select(Order)
         .where(
             Order.id == order_id,
-            Order.user_id == user_id,
+            Order.user_id == user_id
         )
         .options(selectinload(Order.items))
     )
@@ -270,7 +270,7 @@ async def cancel_order_service(
     result = await db.execute(select(Order)
         .where(
             Order.id == order_id,
-            Order.user_id == user_id,
+            Order.user_id == user_id
         )
         .options(
             selectinload(Order.items)
@@ -285,11 +285,11 @@ async def cancel_order_service(
 
     if order.status not in {
         OrderStatus.PENDING,
-        OrderStatus.CONFIRMED,
+        OrderStatus.CONFIRMED
     }:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Order cannot be cancelled at this stage",
+            detail="Order cannot be cancelled at this stage"
         )
 
     order.status = OrderStatus.CANCELLED
@@ -312,7 +312,7 @@ async def cancel_order_service(
     result = await db.execute(select(Order)
         .where(
             Order.id == order_id,
-            Order.user_id == user_id,
+            Order.user_id == user_id
         )
         .options(
             selectinload(Order.items)
@@ -326,9 +326,9 @@ async def cancel_order_service(
 
 async def get_restaurant_orders_service(
     db: AsyncSession,
-    user_id: int,
+    user_id: int
 ):
-    # 1. Get current user
+    #  Get current user
     user_result = await db.execute(
         select(User).where(User.id == user_id)
     )
@@ -338,57 +338,56 @@ async def get_restaurant_orders_service(
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
+            detail="User not found"
         )
 
-    # 2. Admin → can see orders from all restaurants
+    #  Admin → can see orders from all restaurants
     if user.role == UserRoleEnum.ADMIN:
         result = await db.execute(
             select(Order)
             .join(
                 Restaurant,
-                Order.restaurant_id == Restaurant.id,
+                Order.restaurant_id == Restaurant.id
             )
             .where(
-                Restaurant.is_active.is_(True),
+                Restaurant.is_active.is_(True)
             )
             .options(
-                selectinload(Order.items),
+                selectinload(Order.items)
             )
             .order_by(
-                Order.created_at.desc(),
+                Order.created_at.desc()
             )
         )
 
-    # 3. Restaurant owner → can see all orders
+    #    Restaurant owner → can see all orders
     #    from their own restaurant only
     elif user.role == UserRoleEnum.RESTAURANT_OWNER:
         result = await db.execute(
             select(Order)
             .join(
                 Restaurant,
-                Order.restaurant_id == Restaurant.id,
+                Order.restaurant_id == Restaurant.id
             )
             .where(
                 Restaurant.owner_id == user_id,
-                Restaurant.is_active.is_(True),
+                Restaurant.is_active.is_(True)
             )
             .options(
-                selectinload(Order.items),
+                selectinload(Order.items)
             )
             .order_by(
-                Order.created_at.desc(),
+                Order.created_at.desc()
             )
         )
 
-    # 4. Other roles → forbidden
+    #  Other roles → forbidden
     else:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You are not authorized to view restaurant orders",
         )
 
-    # 5. Return orders
     orders = result.scalars().unique().all()
 
     return orders
@@ -398,9 +397,9 @@ async def get_restaurant_orders_service(
 async def get_restaurant_order_by_id_service(
     db: AsyncSession,
     user_id: int,
-    order_id: int,
+    order_id: int
 ):
-    # 1. Get current user
+    #  Get current user
     user_result = await db.execute(
         select(User).where(User.id == user_id)
     )
@@ -410,28 +409,28 @@ async def get_restaurant_order_by_id_service(
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
+            detail="User not found"
         )
 
-    # 2. Admin can view any restaurant order
+    #  Admin can view any restaurant order
     if user.role == UserRoleEnum.ADMIN:
 
         result = await db.execute(
             select(Order)
             .join(
                 Restaurant,
-                Order.restaurant_id == Restaurant.id,
+                Order.restaurant_id == Restaurant.id
             )
             .where(
                 Order.id == order_id,
-                Restaurant.is_active.is_(True),
+                Restaurant.is_active.is_(True)
             )
             .options(
                 selectinload(Order.items)
             )
         )
 
-    # 3. Restaurant owner can view only their own restaurant order
+    #  Restaurant owner can view only their own restaurant order
     elif user.role == UserRoleEnum.RESTAURANT_OWNER:
 
         result = await db.execute(
@@ -450,20 +449,20 @@ async def get_restaurant_order_by_id_service(
             )
         )
 
-    # 4. Other roles are not allowed
+    #  Other roles are not allowed
     else:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You are not authorized to view restaurant orders",
+            detail="You are not authorized to view restaurant orders"
         )
 
-    # 5. Order not found / not owned by restaurant owner
+    #  Order not found / not owned by restaurant owner
     order = result.scalar_one_or_none()
 
     if not order:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Order not found",
+            detail="Order not found"
         )
 
     return order
@@ -474,17 +473,16 @@ async def update_restaurant_order_status_service(
     db: AsyncSession,
     user_id: int,
     order_id: int,
-    new_status: OrderStatus,
+    new_status: OrderStatus
 ):
 
-    # ---------------------------------------------------------
+
     # Get current user
-    # ---------------------------------------------------------
 
     user_result = await db.execute(
         select(User).where(
             User.id == user_id,
-            User.is_active.is_(True),
+            User.is_active.is_(True)
         )
     )
 
@@ -493,18 +491,17 @@ async def update_restaurant_order_status_service(
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
+            detail="User not found"
         )
 
-    # ---------------------------------------------------------
+
     # Authorization
     # Only Admin and Restaurant Owner
     # can update order status
-    # ---------------------------------------------------------
 
     if user.role not in {
         UserRoleEnum.ADMIN,
-        UserRoleEnum.RESTAURANT_OWNER,
+        UserRoleEnum.RESTAURANT_OWNER
     }:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -514,9 +511,8 @@ async def update_restaurant_order_status_service(
             ),
         )
 
-    # ---------------------------------------------------------
+
     # Get order
-    # ---------------------------------------------------------
 
     # Admin can update any order
     if user.role == UserRoleEnum.ADMIN:
@@ -524,12 +520,12 @@ async def update_restaurant_order_status_service(
         result = await db.execute(
             select(Order)
             .where(
-                Order.id == order_id,
+                Order.id == order_id
             )
             .options(
                 selectinload(Order.user),
                 selectinload(Order.restaurant),
-                selectinload(Order.items),
+                selectinload(Order.items)
             )
         )
 
@@ -541,17 +537,17 @@ async def update_restaurant_order_status_service(
             select(Order)
             .join(
                 Restaurant,
-                Order.restaurant_id == Restaurant.id,
+                Order.restaurant_id == Restaurant.id
             )
             .where(
                 Order.id == order_id,
                 Restaurant.owner_id == user_id,
-                Restaurant.is_active.is_(True),
+                Restaurant.is_active.is_(True)
             )
             .options(
                 selectinload(Order.user),
                 selectinload(Order.restaurant),
-                selectinload(Order.items),
+                selectinload(Order.items)
             )
         )
 
@@ -560,27 +556,25 @@ async def update_restaurant_order_status_service(
     if not order:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Order not found",
+            detail="Order not found"
         )
 
-    # ---------------------------------------------------------
     # Allowed status transitions
-    # ---------------------------------------------------------
 
     allowed_transitions = {
 
         OrderStatus.PENDING: {
             OrderStatus.CONFIRMED,
-            OrderStatus.CANCELLED,
+            OrderStatus.CANCELLED
         },
 
         OrderStatus.CONFIRMED: {
             OrderStatus.PREPARING,
-            OrderStatus.CANCELLED,
+            OrderStatus.CANCELLED
         },
 
         OrderStatus.PREPARING: {
-            OrderStatus.READY,
+            OrderStatus.READY
         },
     }
 
@@ -589,9 +583,7 @@ async def update_restaurant_order_status_service(
         set(),
     )
 
-    # ---------------------------------------------------------
     # Check status transition
-    # ---------------------------------------------------------
 
     if new_status not in allowed_statuses:
 
@@ -604,18 +596,17 @@ async def update_restaurant_order_status_service(
             ),
         )
 
-    # ---------------------------------------------------------
+
     # Payment check
     # Payment must be paid before
     # restaurant starts preparing the order
-    # ---------------------------------------------------------
 
     if new_status == OrderStatus.PREPARING:
 
         payment_result = await db.execute(
             select(Payment).where(
                 Payment.order_id == order.id,
-                Payment.status == "paid",
+                Payment.status == "paid"
             )
         )
 
@@ -631,37 +622,34 @@ async def update_restaurant_order_status_service(
                 ),
             )
 
-    # ---------------------------------------------------------
+
     # Update order status
-    # ---------------------------------------------------------
 
     order.status = new_status
 
     await db.commit()
 
-    # ---------------------------------------------------------
+
     # Send notification through Celery
-    # ---------------------------------------------------------
+
 
     send_order_status_notification.delay(
         user_id=order.user_id,
         order_id=order.id,
-        new_status=new_status.value,
+        new_status=new_status.value
     )
 
-    # ---------------------------------------------------------
     # Reload order with relationships
-    # ---------------------------------------------------------
 
     result = await db.execute(
         select(Order)
         .where(
-            Order.id == order_id,
+            Order.id == order_id
         )
         .options(
             selectinload(Order.user),
             selectinload(Order.restaurant),
-            selectinload(Order.items),
+            selectinload(Order.items)
         )
     )
 

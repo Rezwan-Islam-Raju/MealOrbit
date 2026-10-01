@@ -11,7 +11,7 @@ from app.schemas.restaurant_schema import (
 async def create_restaurant_service(
     db: AsyncSession,
     user_id: int,
-    request: RestaurantCreateRequest,
+    request: RestaurantCreateRequest
 ):
 
     restaurant_name = request.name.strip()
@@ -25,7 +25,7 @@ async def create_restaurant_service(
     if existing_restaurant:
         raise HTTPException(
             status_code=400,
-            detail="Restaurant with this name already exists",
+            detail="Restaurant with this name already exists"
         )
 
 
@@ -53,12 +53,12 @@ async def create_restaurant_service(
 
 async def get_restaurant_service(
     db: AsyncSession,
-    restaurant_id: int,
+    restaurant_id: int
 ):
     result = await db.execute(
         select(Restaurant).where(
             Restaurant.id == restaurant_id,
-            Restaurant.is_active.is_(True),
+            Restaurant.is_active.is_(True)
         )
     )
 
@@ -67,14 +67,14 @@ async def get_restaurant_service(
     if not restaurant:
         raise HTTPException(
             status_code=400,
-            detail="Restaurant not found",
+            detail="Restaurant not found"
         )
 
     return restaurant
 
 
 async def get_restaurants_service(
-    db: AsyncSession,
+    db: AsyncSession
 ):
     result = await db.execute(
         select(Restaurant)
@@ -82,7 +82,7 @@ async def get_restaurants_service(
             Restaurant.is_active.is_(True),
         )
         .order_by(
-            Restaurant.id.desc(),
+            Restaurant.id.desc()
         )
     )
 
@@ -93,12 +93,12 @@ async def get_restaurants_service(
 
 async def get_my_restaurants_service(
     db: AsyncSession,
-    user_id: int,
+    user_id: int
 ):
     result = await db.execute(
         select(Restaurant).where(
             Restaurant.owner_id == user_id,
-            Restaurant.is_active.is_(True),
+            Restaurant.is_active.is_(True)
         )
     )
 
@@ -111,12 +111,12 @@ async def update_restaurant_service(
     db: AsyncSession,
     restaurant_id: int,
     user_id: int,
-    request: RestaurantStatusUpdateRequest,
+    request: RestaurantStatusUpdateRequest
 ):
     result = await db.execute(
         select(Restaurant).where(
             Restaurant.id == restaurant_id,
-            Restaurant.is_active.is_(True),
+            Restaurant.is_active.is_(True)
         )
     )
 
@@ -125,14 +125,14 @@ async def update_restaurant_service(
     if not restaurant:
         raise HTTPException(
             status_code=400,
-            detail="Restaurant not found",
+            detail="Restaurant not found"
         )
 
     # Owner check
     if restaurant.owner_id != user_id:
         raise HTTPException(
             status_code=403,
-            detail="You are not the owner of this restaurant",
+            detail="You are not the owner of this restaurant"
         )
 
     updated_data = request.model_dump(exclude_unset=True)
@@ -150,12 +150,12 @@ async def update_restaurant_status_service(
     db: AsyncSession,
     restaurant_id: int,
     user_id: int,
-    request: RestaurantStatusUpdateRequest,
+    request: RestaurantStatusUpdateRequest
 ):
     result = await db.execute(
         select(Restaurant).where(
             Restaurant.id == restaurant_id,
-            Restaurant.is_active.is_(True),
+            Restaurant.is_active.is_(True)
         )
     )
 
@@ -164,14 +164,14 @@ async def update_restaurant_status_service(
     if not restaurant:
         raise HTTPException(
             status_code=400,
-            detail="Restaurant not found",
+            detail="Restaurant not found"
         )
 
     # Owner check
     if restaurant.owner_id != user_id:
         raise HTTPException(
             status_code=403,
-            detail="You are not the owner of this restaurant",
+            detail="You are not the owner of this restaurant"
         )
 
     restaurant.status = request.status
@@ -185,12 +185,12 @@ async def update_restaurant_status_service(
 async def delete_restaurant_service(
     db: AsyncSession,
     restaurant_id: int,
-    user_id: int,
+    user_id: int
 ):
     result = await db.execute(
         select(Restaurant).where(
             Restaurant.id == restaurant_id,
-            Restaurant.is_active.is_(True),
+            Restaurant.is_active.is_(True)
         )
     )
 
@@ -199,14 +199,14 @@ async def delete_restaurant_service(
     if not restaurant:
         raise HTTPException(
             status_code=400,
-            detail="Restaurant not found",
+            detail="Restaurant not found"
         )
 
     # Owner check
     if restaurant.owner_id != user_id:
         raise HTTPException(
             status_code=403,
-            detail="You are not the owner of this restaurant",
+            detail="You are not the owner of this restaurant"
         )
 
     # Soft delete

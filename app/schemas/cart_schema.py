@@ -20,15 +20,13 @@ class CartItemResponse(BaseModel):
     subtotal: float
 
 
-
-
 class CartResponse(BaseModel):
     id: int
     user_id: int
     items: list[CartItemResponse]
     total_items: int
     subtotal: float
-    coupon_code: str | None
+    coupon_code: str | None = None
     discount_amount: float
     grand_total: float
     created_at: datetime

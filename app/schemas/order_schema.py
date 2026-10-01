@@ -36,8 +36,6 @@ class OrderResponse(BaseModel):
     updated_at: datetime
 
 
-
-
 class OrderStatusUpdateRequest(BaseModel):
     status: OrderStatus
 

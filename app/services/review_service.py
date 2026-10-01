@@ -14,7 +14,7 @@ from app.schemas.riview_schema import ReviewCreateRequest, ReviewUpdateRequest
 async def create_review_service(
     db: AsyncSession,
     user_id: int,
-    request: ReviewCreateRequest,
+    request: ReviewCreateRequest
 ):
     # Check order belongs to logged-in user
     result = await db.execute(
@@ -24,7 +24,7 @@ async def create_review_service(
         )
         .where(
             Order.id == request.order_id,
-            Order.user_id == user_id,
+            Order.user_id == user_id
         )
     )
 
@@ -33,7 +33,7 @@ async def create_review_service(
     if not order:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Order not found",
+            detail="Order not found"
         )
 
     # Check food exists
@@ -48,7 +48,7 @@ async def create_review_service(
     if not food:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Food not found",
+            detail="Food not found"
         )
 
     # Check food belongs to the order
@@ -60,7 +60,7 @@ async def create_review_service(
     if not food_exists_in_order:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="This food does not belong to this order",
+            detail="This food does not belong to this order"
         )
 
     # Check duplicate review
@@ -68,7 +68,7 @@ async def create_review_service(
         select(Review).where(
             Review.user_id == user_id,
             Review.food_id == request.food_id,
-            Review.order_id == request.order_id,
+            Review.order_id == request.order_id
         )
     )
 
@@ -77,7 +77,7 @@ async def create_review_service(
     if existing_review:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="You have already reviewed this food for this order",
+            detail="You have already reviewed this food for this order"
         )
 
     review = Review(
@@ -87,7 +87,7 @@ async def create_review_service(
         rating=request.rating,
         comment=request.comment.strip()
         if request.comment
-        else None,
+        else None
     )
 
     db.add(review)
@@ -100,14 +100,14 @@ async def create_review_service(
 
 async def get_review_by_id_service(
     db: AsyncSession,
-    review_id: int,
+    review_id: int
 ):
     result = await db.execute(
         select(Review)
         .options(
             selectinload(Review.user),
             selectinload(Review.food),
-            selectinload(Review.order),
+            selectinload(Review.order)
         )
         .where(
             Review.id == review_id
@@ -119,7 +119,7 @@ async def get_review_by_id_service(
     if not review:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Review not found",
+            detail="Review not found"
         )
 
     return review
@@ -127,10 +127,10 @@ async def get_review_by_id_service(
 
 async def get_food_reviews_service(
     db: AsyncSession,
-    food_id: int,
+    food_id: int
 ):
 
-    # 1. Check food exists
+    # Check food exists
 
 
     result = await db.execute(
@@ -144,11 +144,11 @@ async def get_food_reviews_service(
     if not food:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Food not found",
+            detail="Food not found"
         )
 
 
-    # 2. Get reviews
+    #  Get reviews
 
 
     result = await db.execute(
@@ -169,7 +169,7 @@ async def get_food_reviews_service(
 
 async def get_my_reviews_service(
     db: AsyncSession,
-    user_id: int,
+    user_id: int
 ):
     result = await db.execute(
         select(Review)
@@ -192,16 +192,16 @@ async def update_review_service(
     db: AsyncSession,
     user_id: int,
     review_id: int,
-    request: ReviewUpdateRequest,
+    request: ReviewUpdateRequest
 ):
 
-    # 1. Find user's review
+    #  Find user's review
 
 
     result = await db.execute(
         select(Review).where(
             Review.id == review_id,
-            Review.user_id == user_id,
+            Review.user_id == user_id
         )
     )
 
@@ -210,18 +210,18 @@ async def update_review_service(
     if not review:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Review not found",
+            detail="Review not found"
         )
 
 
-    # 2. Update rating
+    #  Update rating
 
 
     if request.rating is not None:
         review.rating = request.rating
 
 
-    # 3. Update comment
+    #  Update comment
 
 
     if request.comment is not None:
@@ -229,9 +229,7 @@ async def update_review_service(
 
         review.comment = comment if comment else None
 
-
-    # 4. Save changes
-
+    #  Save changes
 
     await db.commit()
     await db.refresh(review)
@@ -246,16 +244,16 @@ async def update_review_service(
 async def delete_review_service(
     db: AsyncSession,
     user_id: int,
-    review_id: int,
+    review_id: int
 ):
 
-    # 1. Find user's review
+    #  Find user's review
 
 
     result = await db.execute(
         select(Review).where(
             Review.id == review_id,
-            Review.user_id == user_id,
+            Review.user_id == user_id
         )
     )
 
@@ -264,12 +262,10 @@ async def delete_review_service(
     if not review:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Review not found",
+            detail="Review not found"
         )
 
-
-    # 2. Delete review
-
+    #  Delete review
 
     await db.delete(review)
 

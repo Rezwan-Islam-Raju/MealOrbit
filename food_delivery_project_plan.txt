@@ -1,4 +1,4 @@
-# 🍔 Food Delivery Backend API
+# 🍔 MealOrbit food Delivery Backend API
 
 ## 🎯 Project Goal
 
@@ -752,7 +752,7 @@ File Upload Validation
 Payment Verification
 ```
 
-`.env` কখনো GitHub-এ push করা যাবে না।
+
 
 ---
 
@@ -868,7 +868,7 @@ password_reset_tokens
 
 # 🚀 Development Order
 
-সব একসাথে শুরু করা যাবে না।
+
 
 ### Phase 1 — Foundation
 
@@ -1004,7 +1004,7 @@ password_reset_tokens
 
 # ⭐ Final Project Target
 
-শেষে architecture হবে:
+
 
 ```text
                     ┌──────────────┐

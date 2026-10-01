@@ -15,13 +15,13 @@ async def update_rider_location_service(
     user_id: int,
     delivery_id: int,
     latitude: float,
-    longitude: float,
+    longitude: float
 ):
     # Find logged-in rider
     result = await db.execute(
         select(Rider).where(
             Rider.user_id == user_id,
-            Rider.is_active.is_(True),
+            Rider.is_active.is_(True)
         )
     )
 
@@ -30,14 +30,14 @@ async def update_rider_location_service(
     if not rider:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Rider not found",
+            detail="Rider not found"
         )
 
     # Check delivery belongs to this rider
     result = await db.execute(
         select(Delivery).where(
             Delivery.id == delivery_id,
-            Delivery.rider_id == rider.id,
+            Delivery.rider_id == rider.id
         )
     )
 
@@ -46,7 +46,7 @@ async def update_rider_location_service(
     if not delivery:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Delivery not found for this rider",
+            detail="Delivery not found for this rider"
         )
 
     # Location update not allowed after delivery
@@ -56,14 +56,14 @@ async def update_rider_location_service(
     ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Location update is not allowed for this delivery",
+            detail="Location update is not allowed for this delivery"
         )
 
     location = {
         "rider_id": rider.id,
         "delivery_id": delivery.id,
         "latitude": latitude,
-        "longitude": longitude,
+        "longitude": longitude
     }
 
     # Save latest location
@@ -72,13 +72,13 @@ async def update_rider_location_service(
     await redis_client.set(
         key,
         json.dumps(location),
-        ex=300,
+        ex=300
     )
 
     # Send live location through Redis Pub/Sub
     await publish_message(
         f"delivery_location:{delivery.id}",
-        location,
+        location
     )
 
     return location

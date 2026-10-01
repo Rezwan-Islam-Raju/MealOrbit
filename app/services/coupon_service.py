@@ -16,12 +16,10 @@ from app.schemas.coupon_schema import CouponCreateRequest
 async def create_coupon_service(
     db: AsyncSession,
     request: CouponCreateRequest,
-    admin_id: int,
+    admin_id: int
 ):
     # Check user
-    result = await db.execute(
-        select(User).where(
-            User.id == admin_id,
+    result = await db.execute(select(User).where( User.id == admin_id,
             User.is_active.is_(True)
         )
     )
@@ -73,21 +71,15 @@ async def create_coupon_service(
     return coupon
 
 
-
 # GET ACTIVE COUPONS
 
 
 async def get_coupons_service(
     db: AsyncSession
 ):
-    result = await db.execute(
-        select(Coupon).where(
-            Coupon.is_active.is_(True)
-        )
-    )
+    result = await db.execute(select(Coupon).where(Coupon.is_active.is_(True)))
 
     return result.scalars().all()
-
 
 
 # CUSTOMER - VALIDATE / USE COUPON
@@ -100,8 +92,7 @@ async def validate_coupon(
 ):
     code = code.strip().upper()
 
-    result = await db.execute(
-        select(Coupon).where(
+    result = await db.execute(select(Coupon).where(
             Coupon.code == code,
             Coupon.is_active.is_(True)
         )
@@ -147,9 +138,7 @@ async def validate_coupon(
     return coupon
 
 
-
 # CALCULATE DISCOUNT
-
 
 def calculate_discount(
     coupon: Coupon,

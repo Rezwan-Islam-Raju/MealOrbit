@@ -43,7 +43,7 @@ async def food_create_category_service(
         name=name,
         description=request.description,
         img_url=request.img_url,
-        is_active=True,
+        is_active=True
     )
 
     db.add(category)
@@ -88,7 +88,7 @@ async def food_get_all_categories_service(
             "img_url": category.img_url,
             "is_active": category.is_active,
             "created_at": category.created_at,
-            "updated_at": category.updated_at,
+            "updated_at": category.updated_at
         }
         for category in categories
     ]

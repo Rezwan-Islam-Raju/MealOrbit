@@ -4,7 +4,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Integer,
-    String,
+    String
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func

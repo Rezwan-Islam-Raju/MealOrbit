@@ -22,128 +22,123 @@ from app.services.delivery_service import (
 router = APIRouter()
 
 
-# ASSIGN RIDER
-# Restaurant Owner
 
+
+#---------- ASSIGN RIDER AND RESTAURANT Owner API -----------
 
 @router.post(
     "/assign/{order_id}/{rider_id}",
     response_model=DeliveryResponse,
-    status_code=status.HTTP_201_CREATED,
+    status_code=status.HTTP_201_CREATED
 )
 async def assign_rider(
     order_id: int,
     rider_id: int,
     user_id: int = Depends(require_user_id),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db)
 ):
     result= await assign_rider_service(
         db=db,
         user_id=user_id,
         order_id=order_id,
-        rider_id=rider_id,
+        rider_id=rider_id
     )
     return result
 
-# GET MY DELIVERIES
-# Rider
+
+#--------- GET MY DELIVERIES AND RIDER API -----------
 
 @router.get(
     "/my",
-    response_model=list[DeliveryResponse],
+    response_model=list[DeliveryResponse]
 )
 async def get_my_deliveries(
     user_id: int = Depends(require_user_id),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db)
 ):
     result= await get_my_delivery_service(
         db=db,
-        user_id=user_id,
+        user_id=user_id
     )
     return result
 
 
 
-# GET DELIVERY BY ORDER
+#----------- GET DELIVERY BY ORDER API ----------
 
 @router.get("/order/{order_id}")
 async def get_delivery_by_order(
     order_id: int,
     user_id: int = Depends(require_user_id),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db)
 ):
     result= await get_delivery_by_order_service(
         db=db,
         user_id=user_id,
-        order_id=order_id,
+        order_id=order_id
     )
     return result
 
 
-# ACCEPT DELIVERY
-# Rider
+#----------- ACCEPT DELIVERY BY RIDER API ----------
 
 @router.patch(
     "/{delivery_id}/accept",
-    response_model=DeliveryResponse,
+    response_model=DeliveryResponse
 )
 async def accept_delivery(
     delivery_id: int,
     user_id: int = Depends(require_user_id),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db)
 ):
     result= await accept_delivery_service(
         db=db,
         user_id=user_id,
-        delivery_id=delivery_id,
+        delivery_id=delivery_id
     )
     return result
 
-# PICKUP ORDER
-# Rider
+#---------- PICKUP ORDER BY RIDER API -----------
+
 
 @router.patch(
     "/{delivery_id}/pickup",
-    response_model=DeliveryResponse,
+    response_model=DeliveryResponse
 )
 async def pickup_delivery(
     delivery_id: int,
     user_id: int = Depends(require_user_id),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db)
 ):
     result= await pickup_delivery_service(
         db=db,
         user_id=user_id,
-        delivery_id=delivery_id,
+        delivery_id=delivery_id
     )
     return result
 
 
 
-# OUT FOR DELIVERY
-# Rider
-
+#---------- OUT FOR DELIVERY BY RIDER API ----------
 
 @router.patch(
     "/{delivery_id}/out-for-delivery",
-    response_model=DeliveryResponse,
+    response_model=DeliveryResponse
 )
 async def out_for_delivery(
     delivery_id: int,
     user_id: int = Depends(require_user_id),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db)
 ):
     return await out_for_delivery_service(
         db=db,
         user_id=user_id,
-        delivery_id=delivery_id,
+        delivery_id=delivery_id
     )
 
 
 
-# COMPLETE DELIVERY
-# Rider
-
+#-------- COMPLETE DELIVERY BY RIDER API ----------
 
 @router.patch(
     "/{delivery_id}/complete",
@@ -152,20 +147,18 @@ async def out_for_delivery(
 async def complete_delivery(
     delivery_id: int,
     user_id: int = Depends(require_user_id),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db)
 ):
     result= await complete_delivery_service(
         db=db,
         user_id=user_id,
-        delivery_id=delivery_id,
+        delivery_id=delivery_id
     )
     return result
 
 
 
-# CANCEL DELIVERY
-# Rider
-
+#-------- CANCEL DELIVERY BY RIDER API ----------
 
 @router.patch(
     "/{delivery_id}/cancel",

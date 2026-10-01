@@ -12,7 +12,7 @@ from config.database import get_db
 router = APIRouter()
 
 
-
+#--------- CHECKOUT API ---------
 @router.post(
     "/checkout",
     response_model=OrderResponse
@@ -29,24 +29,28 @@ async def checkout(
     return order
 
 
+#---------- GET MY ORDERS ----------
+
 @router.get(
     "/my",
-    response_model=list[OrderResponse],
+    response_model=list[OrderResponse]
 )
 async def get_my_orders(
     user_id: int = Depends(require_user_id),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db)
 ):
-    return await get_my_orders_service(
+    result= await get_my_orders_service(
         db=db,
-        user_id=user_id,
+        user_id=user_id
     )
+    return result
 
 
+#------------ GET MY ORDER API ----------
 
 @router.get(
     "/{order_id}",
-    response_model=OrderResponse,
+    response_model=OrderResponse
 )
 async def get_my_order(
     order_id: int,
@@ -61,6 +65,7 @@ async def get_my_order(
     return result
 
 
+#------------ CANCEL ORDER API ----------
 
 @router.patch(
     "/{order_id}/cancel",
@@ -79,22 +84,23 @@ async def cancel_order(
     return result
 
 
+#---------- GET RESTAURANT ORDERS API -------------
 
 @router.get(
     "/restaurant/my-orders",
-    response_model=list[OrderResponse],
+    response_model=list[OrderResponse]
 )
-
 async def get_restaurant_orders(
     user_id: int = Depends(require_user_id),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db)
 ):
     result= await get_restaurant_orders_service(
         db=db,
-        user_id=user_id,
+        user_id=user_id
     )
     return result
 
+#----------- GET RESTAURANT ORDER API ----------
 
 @router.get(
     "/restaurant/{order_id}",
@@ -103,31 +109,32 @@ async def get_restaurant_orders(
 async def get_restaurant_order(
     order_id: int,
     user_id: int = Depends(require_user_id),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db)
 ):
     result= await get_restaurant_order_by_id_service(
         db=db,
         user_id=user_id,
-        order_id=order_id,
+        order_id=order_id
     )
     return result
 
 
+#----------- UPDATE RESTAURANT ORDER STATUS API ----------
 
 @router.patch(
     "/restaurant/{order_id}/status",
-    response_model=OrderResponse,
+    response_model=OrderResponse
 )
 async def update_restaurant_order_status(
     order_id: int,
     request: OrderStatusUpdateRequest,
     user_id: int = Depends(require_user_id),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db)
 ):
     result= await update_restaurant_order_status_service(
         db=db,
         user_id=user_id,
         order_id=order_id,
-        new_status=request.status,
+        new_status=request.status
     )
     return result

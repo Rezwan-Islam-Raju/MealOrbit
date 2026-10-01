@@ -6,15 +6,15 @@ from app.utils.email import send_email
 def send_email_task(
     to_email: str,
     subject: str,
-    body: str,
+    body: str
 ):
     send_email(
         to_email=to_email,
         subject=subject,
-        body=body,
+        body=body
     )
 
     return {
         "message": "Email sent successfully",
-        "to": to_email,
+        "to": to_email
     }

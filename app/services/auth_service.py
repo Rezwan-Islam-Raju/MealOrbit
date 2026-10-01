@@ -313,7 +313,9 @@ async def login_user_service(
         token_type="bearer",
     )
 
+
 #-----Forget Password-------
+
 async def forgot_password_service(
     db: AsyncSession,
     request: UserForgotPasswordRequest
@@ -394,6 +396,8 @@ Food Delivery Team
     return UserForgotPasswordResponse(
         message="If this email is registered, a password reset link has been sent."
     )
+
+
 
 #-----Password reset-------
 
@@ -544,7 +548,9 @@ async def change_password_service(request:UserChangePasswordRequest,db:AsyncSess
     )
 
 
+
 # -------- Logout --------
+
 async def logout_user_service(
     db: AsyncSession,
     request: UserLogoutRequest,

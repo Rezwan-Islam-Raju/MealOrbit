@@ -15,9 +15,9 @@ from app.schemas.notification_schema import NotificationCreateRequest
 async def create_order_notification_service(
     db: AsyncSession,
     user_id: int,
-    request: NotificationCreateRequest,
+    request: NotificationCreateRequest
 ):
-    # 1. Current logged-in user
+    #  Current logged-in user
     result = await db.execute(
         select(User).where(User.id == user_id)
     )
@@ -30,7 +30,7 @@ async def create_order_notification_service(
             detail="User not found",
         )
 
-    # 2. Get order
+    #  Get order
     result = await db.execute(
         select(Order).where(
             Order.id == request.order_id
@@ -45,7 +45,7 @@ async def create_order_notification_service(
             detail="Order not found",
         )
 
-    # 3. Permission check
+    #  Permission check
     if current_user.role == UserRoleEnum.ADMIN:
         pass
 
@@ -55,7 +55,7 @@ async def create_order_notification_service(
             select(Restaurant).where(
                 Restaurant.id == order.restaurant_id,
                 Restaurant.owner_id == user_id,
-                Restaurant.is_active.is_(True),
+                Restaurant.is_active.is_(True)
             )
         )
 
@@ -73,7 +73,7 @@ async def create_order_notification_service(
             detail="Only admin and restaurant owner can create notifications",
         )
 
-    # 4. Get customer from order
+    #  Get customer from order
     customer_result = await db.execute(
         select(User).where(
             User.id == order.user_id
@@ -88,7 +88,7 @@ async def create_order_notification_service(
             detail="Customer not found",
         )
 
-    # 5. Create notification
+    #  Create notification
     notification = Notification(
         user_id=customer.id,
         title=request.title,
@@ -101,7 +101,7 @@ async def create_order_notification_service(
     await db.commit()
     await db.refresh(notification)
 
-    # 6. Send email
+    #  Send email
     send_notification_email.delay(
         customer.email,
         request.title,
@@ -112,6 +112,7 @@ async def create_order_notification_service(
 
 
 # GET NOTIFICATION
+
 async def get_my_notification_service(
         db: AsyncSession,
         user_id: int
@@ -145,11 +146,12 @@ async def get_unread_notification_service(
     result= result.scalars().all()
     return result
 
+
 # GET UNREAD COUNT
 
 async def get_unread_count_notification_service(
     db: AsyncSession,
-    user_id: int,
+    user_id: int
 ):
     result = await db.execute(
         select(
@@ -157,7 +159,7 @@ async def get_unread_count_notification_service(
         )
         .where(
             Notification.user_id == user_id,
-            Notification.is_read.is_(False),
+            Notification.is_read.is_(False)
         )
     )
 
@@ -180,14 +182,17 @@ async def mark_notifications_as_read_service(
         select(Notification)
         .where(
             Notification.id == notification_id,
-            Notification.user_id == user_id,
+            Notification.user_id == user_id
         )
     )
 
     notification = result.scalar_one_or_none()
 
     if not notification:
-        raise HTTPException(status_code=404, detail="Notification not found")
+        raise HTTPException(
+            status_code=404,
+            detail="Notification not found"
+        )
 
     notification.is_read = True
 
@@ -234,7 +239,7 @@ async def delete_notification_service(
         select(Notification)
         .where(
             Notification.id == notification_id,
-            Notification.user_id == user_id,
+            Notification.user_id == user_id
         )
     )
 

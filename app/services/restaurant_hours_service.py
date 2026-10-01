@@ -11,12 +11,12 @@ async def create_restaurant_hours_service(
     db: AsyncSession,
     restaurant_id: int,
     user_id: int,
-    request: RestaurantHoursCreateRequest,
+    request: RestaurantHoursCreateRequest
 ):
 
     result = await db.execute(select(Restaurant).where(Restaurant.id == restaurant_id,
             Restaurant.owner_id == user_id,
-            Restaurant.is_active == True,
+            Restaurant.is_active == True
         )
     )
 
@@ -25,12 +25,12 @@ async def create_restaurant_hours_service(
     if not restaurant:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Restaurant not found",
+            detail="Restaurant not found"
         )
 
     existing_result = await db.execute(
         select(RestaurantHours).where(RestaurantHours.restaurant_id == restaurant_id,
-            RestaurantHours.day_of_week == request.day_of_week,
+            RestaurantHours.day_of_week == request.day_of_week
         )
     )
 
@@ -39,20 +39,20 @@ async def create_restaurant_hours_service(
     if existing_hours:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Restaurant hours for this day already exist",
+            detail="Restaurant hours for this day already exist"
         )
 
     if not request.is_closed:
         if request.opening_time is None or request.closing_time is None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Opening and closing time are required",
+                detail="Opening and closing time are required"
             )
 
         if request.opening_time >= request.closing_time:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Opening time must be before closing time",
+                detail="Opening time must be before closing time"
             )
 
     restaurant_hours = RestaurantHours(
@@ -60,7 +60,7 @@ async def create_restaurant_hours_service(
         day_of_week=request.day_of_week,
         opening_time=request.opening_time,
         closing_time=request.closing_time,
-        is_closed=request.is_closed,
+        is_closed=request.is_closed
     )
 
     db.add(restaurant_hours)
@@ -73,7 +73,7 @@ async def create_restaurant_hours_service(
 
 async def get_restaurant_hours_service(
     db: AsyncSession,
-    restaurant_id: int,
+    restaurant_id: int
 ):
 
     result = await db.execute(
@@ -93,7 +93,7 @@ async def update_restaurant_hours_service(
     restaurant_id: int,
     hour_id: int,
     user_id: int,
-    request: RestaurantHoursUpdateRequest,
+    request: RestaurantHoursUpdateRequest
 ):
 
     result = await db.execute(
@@ -103,7 +103,7 @@ async def update_restaurant_hours_service(
             RestaurantHours.id == hour_id,
             RestaurantHours.restaurant_id == restaurant_id,
             Restaurant.owner_id == user_id,
-            Restaurant.is_active == True,
+            Restaurant.is_active == True
         )
     )
 
@@ -112,7 +112,7 @@ async def update_restaurant_hours_service(
     if not hours:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Restaurant hours not found",
+            detail="Restaurant hours not found"
         )
 
     if request.opening_time is not None:
@@ -129,13 +129,13 @@ async def update_restaurant_hours_service(
         if hours.opening_time is None or hours.closing_time is None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Opening and closing time are required",
+                detail="Opening and closing time are required"
             )
 
         if hours.opening_time >= hours.closing_time:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Opening time must be before closing time",
+                detail="Opening time must be before closing time"
             )
 
     await db.commit()
@@ -149,7 +149,7 @@ async def delete_restaurant_hours_service(
     db: AsyncSession,
     restaurant_id: int,
     hour_id: int,
-    user_id: int,
+    user_id: int
 ):
 
     result = await db.execute(
@@ -159,7 +159,7 @@ async def delete_restaurant_hours_service(
             RestaurantHours.id == hour_id,
             RestaurantHours.restaurant_id == restaurant_id,
             Restaurant.owner_id == user_id,
-            Restaurant.is_active == True,
+            Restaurant.is_active == True
         )
     )
 
@@ -168,7 +168,7 @@ async def delete_restaurant_hours_service(
     if not hours:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Restaurant hours not found",
+            detail="Restaurant hours not found"
         )
 
     await db.delete(hours)

@@ -28,6 +28,8 @@ router = APIRouter()
 
 
 
+#------------- GET PROFILE API ---------
+
 @router.get(
     "/profile/all",
     response_model=UserProfileAllResponse
@@ -42,6 +44,8 @@ async def get_profile(
     )
     return result
 
+
+#------------- UPDATE PROFILE API ---------
 
 @router.patch(
     "/profile",
@@ -66,6 +70,7 @@ async def update_profile(
     }
 
 
+#----------- UPLOAD PROFILE IMAGE API ----------
 @router.post(
     "/profile-image",
     response_model=UserProfileImageResponse
@@ -82,6 +87,7 @@ async def upload_profile_image(
     )
     return result
 
+#------------- DELETE PROFILE IMAGE-------------
 
 @router.delete(
     "/profile-image",
@@ -97,6 +103,7 @@ async def delete_profile_image(
     )
     return result
 
+#------------ UPDATE PHONE API -----------
 
 @router.patch(
     "/phone",
@@ -117,6 +124,8 @@ async def update_phone(
         "message": "Phone number updated successfully"
     }
 
+
+#--------------- DEACTIVATE ACCOUNT API ----------------
 
 @router.delete(
     "/account",

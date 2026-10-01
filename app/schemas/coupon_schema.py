@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, Field
 
 
 class DiscountTypeEnum(str, Enum):
@@ -24,8 +24,8 @@ class CouponResponse(BaseModel):
     discount_type: DiscountTypeEnum
     discount_value: float
     min_order_amount: float
-    max_discount: float | None
-    usage_limit: int | None
+    max_discount: float | None = None
+    usage_limit: int | None = None
     used_count: int
     expiry_date: datetime
     is_active: bool

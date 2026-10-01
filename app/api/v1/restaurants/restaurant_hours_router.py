@@ -10,59 +10,67 @@ from config.database import get_db
 
 router = APIRouter(tags=["Restaurant-Hours"])
 
+
+
 #-------- Create Restaurant Hours API ------
+
 @router.post(
     "/{restaurant_id}/hours",
-    response_model=RestaurantHoursResponse,
-)
+    response_model=RestaurantHoursResponse)
 async def create_restaurant_hours(
     restaurant_id: int,
     request: RestaurantHoursCreateRequest,
     user_id: int = Depends(require_user_id),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db)
 ):
     result = await create_restaurant_hours_service(
         db=db,
         restaurant_id=restaurant_id,
         user_id=user_id,
-        request=request,
+        request=request
     )
     return result
 
 
-#--------Get Restaurant Hours-----
+#--------Get Restaurant Hours API -----
 
 @router.get("/{restaurant_id}",response_model=list[RestaurantHoursResponse])
-async def get_restaurant_hours(restaurant_id: int,db: AsyncSession = Depends(get_db)):
+async def get_restaurant_hours(
+        restaurant_id: int,
+        db: AsyncSession = Depends(get_db)
+):
 
     result= await get_restaurant_hours_service(
         db=db,
-        restaurant_id=restaurant_id,
+        restaurant_id=restaurant_id
     )
     return result
 
-#--------- Update Restaurant Hours -------
+#--------- Update Restaurant Hours API --- -------
+
 @router.put(
     "/{restaurant_id}/hours/{hour_id}",
-    response_model=RestaurantHoursResponse,
+    response_model=RestaurantHoursResponse
 )
 async def update_restaurant_hours(
     restaurant_id: int,
     hour_id: int,
     request: RestaurantHoursUpdateRequest,
     user_id: int = Depends(require_user_id),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db)
 ):
     result = await update_restaurant_hours_service(
         db=db,
         restaurant_id=restaurant_id,
         hour_id=hour_id,
         user_id=user_id,
-        request=request,
+        request=request
     )
     return result
 
+
 #------ Delete Restaurant Hours API ---------
+
 @router.delete(
     "/{restaurant_id}/hours/{hour_id}"
 )
@@ -70,12 +78,12 @@ async def delete_restaurant_hours(
     restaurant_id: int,
     hour_id: int,
     user_id: int = Depends(require_user_id),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db)
 ):
     data = await delete_restaurant_hours_service(
         db=db,
         restaurant_id=restaurant_id,
         hour_id=hour_id,
-        user_id=user_id,
+        user_id=user_id
     )
     return data

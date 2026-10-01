@@ -19,15 +19,12 @@ async def assign_rider_service(
     db: AsyncSession,
     user_id: int,
     order_id: int,
-    rider_id: int,
+    rider_id: int
 ):
-    # =====================================================
-    # 1. Get current user
-    # =====================================================
 
-    user_result = await db.execute(
-        select(User).where(
-            User.id == user_id,
+    #  Get current user
+
+    user_result = await db.execute(select(User).where( User.id == user_id,
             User.is_active.is_(True),
         )
     )
@@ -37,16 +34,14 @@ async def assign_rider_service(
     if not current_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
+            detail="User not found"
         )
 
-    # =====================================================
-    # 2. Check permission
-    # =====================================================
+    #  Check permission
 
     if current_user.role not in (
         UserRoleEnum.ADMIN,
-        UserRoleEnum.RESTAURANT_OWNER,
+        UserRoleEnum.RESTAURANT_OWNER
     ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -56,12 +51,8 @@ async def assign_rider_service(
             ),
         )
 
-    # =====================================================
-    # 3. Get order
-    # =====================================================
-
-    result = await db.execute(
-        select(Order)
+    #  Get order
+    result = await db.execute(select(Order)
         .join(
             Restaurant,
             Order.restaurant_id == Restaurant.id,
@@ -77,26 +68,24 @@ async def assign_rider_service(
     if not order:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Order not found",
+            detail="Order not found"
         )
 
-    # =====================================================
-    # 4. Restaurant owner ownership check
-    # =====================================================
+    #  Restaurant owner ownership check
 
     if current_user.role == UserRoleEnum.RESTAURANT_OWNER:
 
         if order.restaurant_id is None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Order has no restaurant",
+                detail="Order has no restaurant"
             )
 
         restaurant_result = await db.execute(
             select(Restaurant).where(
                 Restaurant.id == order.restaurant_id,
                 Restaurant.owner_id == user_id,
-                Restaurant.is_active.is_(True),
+                Restaurant.is_active.is_(True)
             )
         )
 
@@ -111,9 +100,7 @@ async def assign_rider_service(
                 ),
             )
 
-    # =====================================================
-    # 5. Order must be READY
-    # =====================================================
+    #  Order must be READY
 
     if order.status != OrderStatus.READY:
         raise HTTPException(
@@ -124,12 +111,9 @@ async def assign_rider_service(
             ),
         )
 
-    # =====================================================
-    # 6. Check existing delivery
-    # =====================================================
+    #  Check existing delivery
 
-    delivery_result = await db.execute(
-        select(Delivery).where(
+    delivery_result = await db.execute(select(Delivery).where(
             Delivery.order_id == order_id,
         )
     )
@@ -139,19 +123,16 @@ async def assign_rider_service(
     if existing_delivery:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Delivery already exists for this order",
+            detail="Delivery already exists for this order"
         )
 
-    # =====================================================
-    # 7. Find available rider
-    # =====================================================
+    #  Find available rider
 
-    rider_result = await db.execute(
-        select(Rider).where(
+    rider_result = await db.execute(select(Rider).where(
             Rider.id == rider_id,
             Rider.is_active.is_(True),
             Rider.is_online.is_(True),
-            Rider.is_available.is_(True),
+            Rider.is_available.is_(True)
         )
     )
 
@@ -160,12 +141,10 @@ async def assign_rider_service(
     if not rider:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Available rider not found",
+            detail="Available rider not found"
         )
 
-    # =====================================================
-    # 8. Create delivery
-    # =====================================================
+    #  Create delivery
 
     delivery = Delivery(
         order_id=order.id,
@@ -175,45 +154,30 @@ async def assign_rider_service(
 
     db.add(delivery)
 
-    # =====================================================
-    # 9. Rider is no longer available
-    # =====================================================
+    #  Rider is no longer available
 
     rider.is_available = False
 
-    # =====================================================
-    # 10. Update order status
-    # =====================================================
+    #  Update order status
 
     order.status = OrderStatus.RIDER_ASSIGNED
 
-    # =====================================================
-    # 11. Commit
-    # =====================================================
-
     await db.commit()
 
-    # =====================================================
-    # 12. Refresh delivery
-    # =====================================================
+    #  Refresh delivery
 
     await db.refresh(delivery)
 
-    # =====================================================
-    # 13. Send customer notification through Celery
-    # =====================================================
+    #  Send customer notification through Celery
 
     send_order_status_notification.delay(
         user_id=order.user_id,
         order_id=order.id,
-        new_status=OrderStatus.RIDER_ASSIGNED.value,
+        new_status=OrderStatus.RIDER_ASSIGNED.value
     )
 
-    # =====================================================
-    # 14. Return delivery
-    # =====================================================
-
     return delivery
+
 
 # GET MY DELIVERIES
 
@@ -221,22 +185,18 @@ async def get_my_delivery_service(
     db: AsyncSession,
     user_id: int,
 ):
-    # 1. Get current user
-    user_result = await db.execute(
-        select(User).where(
-            User.id == user_id
-        )
-    )
+    #  Get current user
+    user_result = await db.execute(select(User).where(User.id == user_id ))
 
     current_user = user_result.scalar_one_or_none()
 
     if not current_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
+            detail="User not found"
         )
 
-    # 2. Only Admin and Restaurant Owner
+    #  Only Admin and Restaurant Owner
     if current_user.role not in (
         UserRoleEnum.ADMIN,
         UserRoleEnum.RESTAURANT_OWNER,
@@ -249,9 +209,8 @@ async def get_my_delivery_service(
             ),
         )
 
-    # 3. Get deliveries
-    result = await db.execute(
-        select(Delivery)
+    #  Get deliveries
+    result = await db.execute(select(Delivery)
         .join(
             Order,
             Delivery.order_id == Order.id
@@ -277,9 +236,9 @@ async def get_my_delivery_service(
 async def get_delivery_by_order_service(
     db: AsyncSession,
     user_id: int,
-    order_id: int,
+    order_id: int
 ):
-    # 1. Current user
+    #  Current user
     user_result = await db.execute(
         select(User).where(User.id == user_id)
     )
@@ -289,20 +248,20 @@ async def get_delivery_by_order_service(
     if not current_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
+            detail="User not found"
         )
 
-    # 2. Permission check
+    #  Permission check
     if current_user.role not in (
         UserRoleEnum.ADMIN,
         UserRoleEnum.RESTAURANT_OWNER,
     ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only admin and restaurant owner can view delivery",
+            detail="Only admin and restaurant owner can view delivery"
         )
 
-    # 3. Get delivery
+    #  Get delivery
     query = (
         select(Delivery)
         .join(
@@ -315,11 +274,11 @@ async def get_delivery_by_order_service(
         )
         .where(
             Delivery.order_id == order_id,
-            Restaurant.is_active.is_(True),
+            Restaurant.is_active.is_(True)
         )
     )
 
-    # 4. Restaurant owner → own restaurant only
+    #  Restaurant owner → own restaurant only
     if current_user.role == UserRoleEnum.RESTAURANT_OWNER:
         query = query.where(
             Restaurant.owner_id == user_id
@@ -332,7 +291,7 @@ async def get_delivery_by_order_service(
     if not delivery:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Delivery not found or you do not have permission",
+            detail="Delivery not found or you do not have permission"
         )
 
     return delivery
@@ -343,7 +302,7 @@ async def get_delivery_by_order_service(
 async def accept_delivery_service(
     db: AsyncSession,
     user_id: int,
-    delivery_id: int,
+    delivery_id: int
 ):
 
     result = await db.execute(
@@ -355,7 +314,7 @@ async def accept_delivery_service(
         .where(
             Delivery.id == delivery_id,
             Rider.user_id == user_id,
-            Rider.is_active.is_(True),
+            Rider.is_active.is_(True)
         )
     )
 
@@ -364,7 +323,7 @@ async def accept_delivery_service(
     if not delivery:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Delivery not found",
+            detail="Delivery not found"
         )
 
     # Status check
@@ -405,7 +364,7 @@ async def pickup_delivery_service(
         .where(
             Delivery.id == delivery_id,
             Rider.user_id == user_id,
-            Rider.is_active.is_(True),
+            Rider.is_active.is_(True)
         )
     )
 
@@ -414,7 +373,7 @@ async def pickup_delivery_service(
     if not delivery:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Delivery not found",
+            detail="Delivery not found"
         )
 
     # Status check
@@ -443,7 +402,7 @@ async def pickup_delivery_service(
     if not order:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Order not found",
+            detail="Order not found"
         )
 
     # Update order status
@@ -460,7 +419,7 @@ async def pickup_delivery_service(
 async def out_for_delivery_service(
     db: AsyncSession,
     user_id: int,
-    delivery_id: int,
+    delivery_id: int
 ):
 
     result = await db.execute(
@@ -472,7 +431,7 @@ async def out_for_delivery_service(
         .where(
             Delivery.id == delivery_id,
             Rider.user_id == user_id,
-            Rider.is_active.is_(True),
+            Rider.is_active.is_(True)
         )
     )
 
@@ -481,7 +440,7 @@ async def out_for_delivery_service(
     if not delivery:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Delivery not found",
+            detail="Delivery not found"
         )
 
     # Status check
@@ -509,7 +468,7 @@ async def out_for_delivery_service(
     if not order:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Order not found",
+            detail="Order not found"
         )
 
     # Update order status
@@ -520,6 +479,8 @@ async def out_for_delivery_service(
     await db.refresh(delivery)
 
     return delivery
+
+
 
 # COMPLETE DELIVERY
 
@@ -538,7 +499,7 @@ async def complete_delivery_service(
         .where(
             Delivery.id == delivery_id,
             Rider.user_id == user_id,
-            Rider.is_active.is_(True),
+            Rider.is_active.is_(True)
         )
     )
 
@@ -547,7 +508,7 @@ async def complete_delivery_service(
     if not delivery:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Delivery not found",
+            detail="Delivery not found"
         )
 
     # Status check
@@ -576,7 +537,7 @@ async def complete_delivery_service(
     if not order:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Order not found",
+            detail="Order not found"
         )
 
     # Update order status
@@ -597,12 +558,13 @@ async def complete_delivery_service(
 
     return delivery
 
+
 # CANCEL DELIVERY
 
 async def cancel_delivery_service(
     db: AsyncSession,
     user_id: int,
-    delivery_id: int,
+    delivery_id: int
 ):
 
     result = await db.execute(
@@ -614,7 +576,7 @@ async def cancel_delivery_service(
         .where(
             Delivery.id == delivery_id,
             Rider.user_id == user_id,
-            Rider.is_active.is_(True),
+            Rider.is_active.is_(True)
         )
     )
 
@@ -623,7 +585,7 @@ async def cancel_delivery_service(
     if not delivery:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Delivery not found",
+            detail="Delivery not found"
         )
 
     # Cannot cancel completed/cancelled delivery
@@ -633,7 +595,7 @@ async def cancel_delivery_service(
     ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Delivery cannot be cancelled",
+            detail="Delivery cannot be cancelled"
         )
 
     # Update delivery

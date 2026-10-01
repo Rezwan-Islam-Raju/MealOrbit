@@ -17,44 +17,48 @@ router = APIRouter(
     tags=["Payments"],
 )
 
+#---------- CREATE PAYMENT API ------------
 
 @router.post(
     "/create",
-    response_model=PaymentCreateResponse,
+    response_model=PaymentCreateResponse
 )
 async def create_payment(
     request: PaymentCreateRequest,
     user_id: int = Depends(require_user_id),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db)
 ):
     payment = await create_payment_service(
         db=db,
         user_id=user_id,
         order_id=request.order_id,
-        payment_method=request.payment_method,
+        payment_method=request.payment_method
     )
 
     return payment
 
+
+#--------- PAYMENT SUCCESS API -----------
 
 @router.post("/success")
 async def payment_success(
     tran_id: str = Form(...),
     val_id: str = Form(...),
     status: str = Form(...),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db)
 ):
 
     result = await payment_success_service(
         db=db,
         tran_id=tran_id,
         val_id=val_id,
-        payment_status=status,
+        payment_status=status
     )
 
     return result
 
 
+#------------ PAYMENT FAIL API ----------
 
 @router.post("/fail")
 async def payment_fail(
@@ -68,32 +72,34 @@ async def payment_fail(
     return result
 
 
+#----------- PAYMENT CANCEL API -----------
 
 @router.post("/cancel")
 async def payment_cancel(
     tran_id: str = Form(...),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db)
 ):
     result = await payment_cancel_service(
         db=db,
-        tran_id=tran_id,
+        tran_id=tran_id
     )
 
     return result
 
+#------------- PAYMENT IPN API ---------
 
 @router.post("/ipn")
 async def payment_ipn(
     tran_id: str = Form(...),
     val_id: str = Form(None),
     status: str = Form(...),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db)
 ):
     result = await payment_ipn_service(
         db=db,
         tran_id=tran_id,
         val_id=val_id,
-        payment_status=status,
+        payment_status=status
     )
 
     return result

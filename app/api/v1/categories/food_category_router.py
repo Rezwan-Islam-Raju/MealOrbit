@@ -32,13 +32,13 @@ router = APIRouter()
 )
 async def create_category(
     request: FoodCategoryCreateRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db)
 
 ):
     try:
         category = await food_create_category_service(
             db=db,
-            request=request,
+            request=request
 
         )
 
@@ -88,7 +88,7 @@ async def update_category(
     request: FoodCategoryUpdateRequest,
     category_id: int,
     db: AsyncSession = Depends(get_db),
-    user_id:int=Depends(require_user_id),
+    user_id:int=Depends(require_user_id)
 
 ):
     try:
@@ -116,7 +116,7 @@ async def update_category(
 async def delete_category(
     category_id: int,
     db: AsyncSession = Depends(get_db),
-    user_id: int = Depends(require_user_id),
+    user_id: int = Depends(require_user_id)
 ):
     try:
         result = await food_delete_category_service(

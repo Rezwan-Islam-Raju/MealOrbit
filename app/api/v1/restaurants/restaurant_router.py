@@ -20,8 +20,14 @@ from config.database import get_db
 
 router = APIRouter(prefix="/restaurants", tags=["Restaurants"])
 
-# Create Restaurant
-@router.post("/", response_model=RestaurantResponse)
+
+
+
+
+#---------- Create Restaurant API ---------
+
+@router.post("/",
+             response_model=RestaurantResponse)
 async def create_restaurant(
         request: RestaurantCreateRequest,
         user_id: int = Depends(require_user_id),
@@ -30,32 +36,53 @@ async def create_restaurant(
     result = await create_restaurant_service(
         db=db,
         user_id=user_id,
-        request=request,
+        request=request
     )
     return result
 
-# Get All Restaurants
+
+#-----------Get All Restaurants API ---------
+
 @router.get("/", response_model=list[RestaurantResponse])
 async def get_all_restaurants(db: AsyncSession = Depends(get_db)):
-    result = await get_restaurants_service(db=db)
+    result = await get_restaurants_service(
+        db=db
+    )
     return result
 
-# Get My Restaurants
+
+#----------- Get My Restaurants API ---------
+
 @router.get("/my", response_model=list[RestaurantResponse])
 async def get_my_restaurants(
     user_id: int = Depends(require_user_id),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db)
 ):
-    result = await get_my_restaurants_service(db=db, user_id=user_id)
+    result = await get_my_restaurants_service(
+        db=db,
+        user_id=user_id
+    )
     return result
 
-# Get Single Restaurant
+
+
+#---------- Get Single Restaurant API ---------
+
 @router.get("/{restaurant_id}", response_model=RestaurantResponse)
-async def get_restaurant_by_id(restaurant_id: int, db: AsyncSession = Depends(get_db)):
-    result = await get_restaurant_service(db=db, restaurant_id=restaurant_id)
+async def get_restaurant_by_id(
+        restaurant_id: int,
+        db: AsyncSession = Depends(get_db)
+):
+    result = await get_restaurant_service(
+        db=db,
+        restaurant_id=restaurant_id
+    )
     return result
 
-# Update Restaurant Status
+
+
+#----------- Update Restaurant Status API ----------
+
 @router.put("/{restaurant_id}", response_model=RestaurantResponse)
 async def update_restaurant(
         restaurant_id: int,
@@ -71,16 +98,19 @@ async def update_restaurant(
     )
     return result
 
-# Delete Restaurant
+
+
+#------------- Delete Restaurant API -----------
+
 @router.delete("/{restaurant_id}", response_model=MessageResponse)
 async def delete_restaurant(
     restaurant_id: int,
     user_id: int = Depends(require_user_id),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db)
 ):
     result = await delete_restaurant_service(
         db=db,
         restaurant_id=restaurant_id,
-        user_id=user_id,
+        user_id=user_id
     )
     return result

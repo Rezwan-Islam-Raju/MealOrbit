@@ -9,7 +9,7 @@ async def _create_notification(
     user_id: int,
     title: str,
     message: str,
-    notification_type: str,
+    notification_type: str
 ):
     async with async_session() as db:
 
@@ -18,7 +18,7 @@ async def _create_notification(
             title=title,
             message=message,
             notification_type=NotificationTypeEnum(notification_type),
-            is_read=False,
+            is_read=False
         )
 
         db.add(notification)
@@ -34,19 +34,19 @@ def create_notification_task(
     user_id: int,
     title: str,
     message: str,
-    notification_type: str,
+    notification_type: str
 ):
     notification_id = asyncio.run(
         _create_notification(
             user_id=user_id,
             title=title,
             message=message,
-            notification_type=notification_type,
+            notification_type=notification_type
         )
     )
 
     return {
         "message": "Notification created successfully",
         "notification_id": notification_id,
-        "user_id": user_id,
+        "user_id": user_id
     }
