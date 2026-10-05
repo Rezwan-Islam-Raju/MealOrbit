@@ -14,9 +14,16 @@ load_dotenv()
 
 # DATABASE
 
-
+#  Read DATABASE_URL from environment (Render or Local)
 DATABASE_URL = os.getenv("DATABASE_URL")
 
+#  Fallback to local config if environment variable is missing (for local setup)
+if not DATABASE_URL:
+    DATABASE_URL = "postgresql+asyncpg://postgres:rezwan1122@localhost/food_delivery_db"
+
+#  Automatically inject +asyncpg driver for Render's live database connection
+if DATABASE_URL and DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
 
 
 # JWT

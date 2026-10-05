@@ -1,0 +1,28 @@
+services:
+  #  Main FastAPI Web Service
+  - type: web
+    name: mealorbit-api
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: mealorbit-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: mealorbit-redis
+          type: redis
+          property: connectionString
+
+  #  Redis Container (For Celery/Caching)
+  - type: redis
+    name: mealorbit-redis
+    ipAllowList: [] # Access restricted internally to this application only
+
+databases:
+  #  PostgreSQL Database
+  - name: mealorbit-db
+    databaseName: food_delivery_db
+    user: postgres
