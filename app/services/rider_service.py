@@ -3,53 +3,76 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.rider_model import Rider
-from app.models.user_model import User
+from app.models.user_model import User, UserRoleEnum
 from app.schemas.rider_schema import RiderCreateRequest, RiderUpdateRequest
 
 
 async def create_rider_service(
     db: AsyncSession,
-    user_id: int,
+    admin_id: int,
     request: RiderCreateRequest
 ):
-    # Check user
+
+    # Check Admin User
+
     result = await db.execute(
-        select(User).where(User.id == user_id,User.is_active.is_(True)))
+        select(User).where(
+            User.id == admin_id,
+            User.is_active.is_(True)
+        )
+    )
 
-    user = result.scalar_one_or_none()
+    admin = result.scalar_one_or_none()
 
-    if not user:
+    if not admin:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            detail="Admin user not found"
         )
 
-    # Check existing rider
-    result = await db.execute(select(Rider).where(Rider.user_id == user_id))
 
-    existing_rider = result.scalar_one_or_none()
+    # Admin Role Check
 
-    if existing_rider:
+    if admin.role != UserRoleEnum.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only admin can create rider"
+        )
+
+    # Check Phone
+
+    existing_phone = await db.execute(
+        select(Rider).where(
+            Rider.phone == request.phone
+        )
+    )
+
+    if existing_phone.scalar_one_or_none():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Rider profile already exists"
+            detail="Phone number already exists"
         )
 
+    # Check Vehicle Number
+
+    existing_vehicle = await db.execute(
+        select(Rider).where(
+            Rider.vehicle_number == request.vehicle_number
+        )
+    )
+
+    if existing_vehicle.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Vehicle number already exists"
+        )
+
+    # Create Rider
+
     rider = Rider(
-        user_id=user_id,
-        phone=request.phone.strip(),
-        vehicle_type=(request.vehicle_type.strip()
-            if request.vehicle_type
-            else None
-        ),
-        vehicle_number=(
-            request.vehicle_number.strip()
-            if request.vehicle_number
-            else None
-        ),
-        is_online=False,
-        is_available=True,
-        is_active=True
+        phone=request.phone,
+        vehicle_type=request.vehicle_type,
+        vehicle_number=request.vehicle_number
     )
 
     db.add(rider)
@@ -58,7 +81,6 @@ async def create_rider_service(
     await db.refresh(rider)
 
     return rider
-
 
 
 async def get_my_rider_service(

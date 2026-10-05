@@ -3,22 +3,47 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.restaurants_model import Restaurant, StatusEnum
+from app.models.user_model import UserRoleEnum, User
 from app.schemas.restaurant_schema import (
     RestaurantCreateRequest,
     RestaurantStatusUpdateRequest,
 )
+
+
 
 async def create_restaurant_service(
     db: AsyncSession,
     user_id: int,
     request: RestaurantCreateRequest
 ):
+    # Check user
+    result = await db.execute(
+        select(User).where(User.id == user_id)
+    )
+
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+
+    # Only admin can create restaurant
+    if user.role != UserRoleEnum.ADMIN:
+        raise HTTPException(
+            status_code=403,
+            detail="Only admin can create a restaurant"
+        )
 
     restaurant_name = request.name.strip()
 
-
+    # Check duplicate restaurant name
     result = await db.execute(
-        select(Restaurant).where(Restaurant.name.ilike(restaurant_name)))
+        select(Restaurant).where(
+            Restaurant.name.ilike(restaurant_name)
+        )
+    )
 
     existing_restaurant = result.scalar_one_or_none()
 
@@ -28,7 +53,7 @@ async def create_restaurant_service(
             detail="Restaurant with this name already exists"
         )
 
-
+    # Create restaurant
     restaurant = Restaurant(
         owner_id=user_id,
         name=restaurant_name,
@@ -46,6 +71,7 @@ async def create_restaurant_service(
     )
 
     db.add(restaurant)
+
     await db.commit()
     await db.refresh(restaurant)
 
@@ -95,17 +121,49 @@ async def get_my_restaurants_service(
     db: AsyncSession,
     user_id: int
 ):
+    # Get current user
     result = await db.execute(
-        select(Restaurant).where(
-            Restaurant.owner_id == user_id,
-            Restaurant.is_active.is_(True)
-        )
+        select(User).where(User.id == user_id)
     )
 
-    restaurants = result.scalars().all()
+    user = result.scalar_one_or_none()
 
-    return restaurants
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
 
+    # ADMIN →  active restaurant
+    if user.role == UserRoleEnum.ADMIN:
+        result = await db.execute(
+            select(Restaurant)
+            .where(
+                Restaurant.is_active.is_(True)
+            )
+            .order_by(Restaurant.id.desc())
+        )
+
+        return result.scalars().all()
+
+    # RESTAURANT_OWNER →  restaurant
+    if user.role == UserRoleEnum.RESTAURANT_OWNER:
+        result = await db.execute(
+            select(Restaurant)
+            .where(
+                Restaurant.owner_id == user_id,
+                Restaurant.is_active.is_(True)
+            )
+            .order_by(Restaurant.id.desc())
+        )
+
+        return result.scalars().all()
+
+    # Other roles
+    raise HTTPException(
+        status_code=403,
+        detail="Only admin or restaurant owner can access restaurants"
+    )
 
 async def update_restaurant_service(
     db: AsyncSession,

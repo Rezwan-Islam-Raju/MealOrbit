@@ -4,7 +4,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.restaurant_hours_model import RestaurantHours
 from app.models.restaurants_model import Restaurant
+from app.models.user_model import UserRoleEnum, User
 from app.schemas.restaurant_hours_schema import RestaurantHoursCreateRequest, RestaurantHoursUpdateRequest
+
+
+
+
 
 
 async def create_restaurant_hours_service(
@@ -13,14 +18,38 @@ async def create_restaurant_hours_service(
     user_id: int,
     request: RestaurantHoursCreateRequest
 ):
+    # Get current user
+    user_result = await db.execute(
+        select(User).where(User.id == user_id)
+    )
 
-    result = await db.execute(select(Restaurant).where(Restaurant.id == restaurant_id,
-            Restaurant.owner_id == user_id,
-            Restaurant.is_active == True
+    user = user_result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    # Only ADMIN and RESTAURANT_OWNER can create restaurant hours
+    if user.role not in [
+        UserRoleEnum.ADMIN,
+        UserRoleEnum.RESTAURANT_OWNER
+    ]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only admin or restaurant owner can create restaurant hours"
+        )
+
+    # Get restaurant
+    restaurant_result = await db.execute(
+        select(Restaurant).where(
+            Restaurant.id == restaurant_id,
+            Restaurant.is_active.is_(True)
         )
     )
 
-    restaurant = result.scalar_one_or_none()
+    restaurant = restaurant_result.scalar_one_or_none()
 
     if not restaurant:
         raise HTTPException(
@@ -28,8 +57,18 @@ async def create_restaurant_hours_service(
             detail="Restaurant not found"
         )
 
+    # RESTAURANT_OWNER can only manage their own restaurant
+    if user.role == UserRoleEnum.RESTAURANT_OWNER:
+        if restaurant.owner_id != user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only manage your own restaurant"
+            )
+
+    # Check if hours already exist for this day
     existing_result = await db.execute(
-        select(RestaurantHours).where(RestaurantHours.restaurant_id == restaurant_id,
+        select(RestaurantHours).where(
+            RestaurantHours.restaurant_id == restaurant_id,
             RestaurantHours.day_of_week == request.day_of_week
         )
     )
@@ -42,8 +81,13 @@ async def create_restaurant_hours_service(
             detail="Restaurant hours for this day already exist"
         )
 
+    # Validate opening and closing time
     if not request.is_closed:
-        if request.opening_time is None or request.closing_time is None:
+
+        if (
+            request.opening_time is None
+            or request.closing_time is None
+        ):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Opening and closing time are required"
@@ -55,6 +99,7 @@ async def create_restaurant_hours_service(
                 detail="Opening time must be before closing time"
             )
 
+    # Create restaurant hours
     restaurant_hours = RestaurantHours(
         restaurant_id=restaurant_id,
         day_of_week=request.day_of_week,

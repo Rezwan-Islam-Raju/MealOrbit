@@ -7,7 +7,7 @@ from starlette import status
 from app.core.cache import get_cache, set_cache, delete_cache
 from app.models import  Restaurant
 from app.models.food_category_model import FoodCategory
-from app.models.user_model import User
+from app.models.user_model import User, UserRoleEnum
 from app.schemas.food_category_schema import (
     FoodCategoryCreateRequest,
     FoodCategoryUpdateRequest,
@@ -148,6 +148,7 @@ async def food_get_category_by_id_service(
     return category
 
 
+
 async def food_update_category_service(
     request: FoodCategoryUpdateRequest,
     category_id: int,
@@ -157,7 +158,7 @@ async def food_update_category_service(
     # Find current user
     result = await db.execute(
         select(User).where(
-            User.user_id == user_id
+            User.id == user_id
         )
     )
 
@@ -169,16 +170,18 @@ async def food_update_category_service(
             detail="User not found"
         )
 
-    # Check role
-    if user.role not in ["admin", "restaurant_owner"]:
+    # ADMIN + RESTAURANT OWNER
+    if user.role not in [
+        UserRoleEnum.ADMIN,
+        UserRoleEnum.RESTAURANT_OWNER
+    ]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You are not admin or restaurant_owner"
+            detail="Only admin or restaurant owner can update food category"
         )
 
     # ADMIN
-
-    if user.role == "admin":
+    if user.role == UserRoleEnum.ADMIN:
 
         result = await db.execute(
             select(FoodCategory).where(
@@ -188,10 +191,10 @@ async def food_update_category_service(
         )
 
     # RESTAURANT OWNER
-
     else:
 
-        result = await db.execute(select(FoodCategory)
+        result = await db.execute(
+            select(FoodCategory)
             .join(
                 Restaurant,
                 FoodCategory.restaurant_id == Restaurant.id
@@ -213,7 +216,6 @@ async def food_update_category_service(
         )
 
     # Update name
-
     if request.name is not None:
 
         new_name = request.name.strip()
@@ -225,7 +227,8 @@ async def food_update_category_service(
             )
 
         # Check duplicate category name
-        duplicate_result = await db.execute(select(FoodCategory).where(
+        duplicate_result = await db.execute(
+            select(FoodCategory).where(
                 FoodCategory.name == new_name,
                 FoodCategory.id != category_id,
                 FoodCategory.restaurant_id == category.restaurant_id,
@@ -244,28 +247,31 @@ async def food_update_category_service(
         category.name = new_name
 
     # Update description
-
     if request.description is not None:
+
         category.description = request.description.strip()
 
     # Update image URL
-
     if request.img_url is not None:
+
         category.img_url = request.img_url.strip()
 
     # Update active status
-
     if request.is_active is not None:
+
         category.is_active = request.is_active
 
     # Commit
     await db.commit()
+
+    # Refresh
     await db.refresh(category)
 
     # Delete cache
     await delete_cache("categories:all")
 
     return category
+
 
 async def food_delete_category_service(
     category_id: int,

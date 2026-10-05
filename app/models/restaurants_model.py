@@ -61,3 +61,6 @@ class Restaurant(Base):
     hours = relationship("RestaurantHours",back_populates="restaurant",
     cascade="all, delete-orphan")
     foods = relationship("Food",back_populates="restaurant")
+
+    food_categories = relationship("FoodCategory",back_populates="restaurant",
+        cascade="all, delete-orphan")

@@ -10,6 +10,7 @@ router = APIRouter()
 
 
 #--------- UPDATE RIDER LOCATION API ------
+
 @router.post(
     "/",
     response_model=RiderLocationResponse

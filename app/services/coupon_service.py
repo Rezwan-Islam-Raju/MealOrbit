@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.coupon_model import Coupon, DiscountType
-from app.models.user_model import User
+from app.models.user_model import User, UserRoleEnum
 from app.schemas.coupon_schema import CouponCreateRequest
 
 
@@ -33,7 +33,7 @@ async def create_coupon_service(
         )
 
     # Check admin role
-    if user.role != "admin":
+    if user.role != UserRoleEnum.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only admin can create coupons"

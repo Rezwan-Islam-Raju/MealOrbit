@@ -23,22 +23,20 @@ router = APIRouter()
 
 #------------ CREATE RAIDER API --------
 
-@router.post(
-    "/",
-    response_model=RiderResponse
-)
+
+@router.post("/")
 async def create_rider(
     request: RiderCreateRequest,
-    user_id: int = Depends(require_user_id),
+    admin_id: int = Depends(require_user_id),
     db: AsyncSession = Depends(get_db)
 ):
-    result = await create_rider_service(
+    result= await create_rider_service(
         db=db,
-        user_id=user_id,
+        admin_id=admin_id,
         request=request
     )
-
     return result
+
 
 #--------- GET MY RIDER API ----------
 @router.get(

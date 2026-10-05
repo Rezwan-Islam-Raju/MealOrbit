@@ -1,42 +1,121 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>WebSocket Test</title>
+    <title>Live Delivery Location</title>
 </head>
+
 <body>
 
-<h3>WebSocket Location Test</h3>
-<button onclick="connectWS()">Connect</button>
+<h2>Live Delivery Location</h2>
 
-<pre id="output"></pre>
+<label>
+    Delivery ID:
+    <input
+        type="number"
+        id="deliveryId"
+        placeholder="Enter delivery ID"
+    >
+</label>
+
+<button onclick="connectWS()">
+    Connect
+</button>
+
+<hr>
+
+<h3>Connection</h3>
+<pre id="connection"></pre>
+
+<h3>Live Location</h3>
+<pre id="location"></pre>
+
 
 <script>
-function log(message) {
-    document.getElementById("output").textContent += message + "\n";
-}
+
+let ws = null;
+
 
 function connectWS() {
-    const ws = new WebSocket(
-        "ws://127.0.0.1:8000/api/v1/location-ws/6"
-    );
+
+    const deliveryId =
+        document.getElementById("deliveryId").value;
+
+    if (!deliveryId) {
+        document.getElementById("connection").textContent =
+            "Please enter Delivery ID";
+
+        return;
+    }
+
+
+    // Close previous connection
+    if (ws) {
+        ws.close();
+    }
+
+
+    const url =
+        `ws://127.0.0.1:8000/api/v1/location-ws/${deliveryId}`;
+
+
+    ws = new WebSocket(url);
+
 
     ws.onopen = function () {
-        log("WebSocket connected");
+
+        document.getElementById("connection").textContent =
+            "WebSocket connected\n" +
+            "Delivery ID: " + deliveryId;
+
     };
+
 
     ws.onmessage = function (event) {
-        log("Location: " + event.data);
+
+        console.log("Raw message:", event.data);
+
+
+        try {
+
+            const data = JSON.parse(event.data);
+
+
+            document.getElementById("location").textContent =
+                "Rider ID: " + data.rider_id + "\n" +
+                "Delivery ID: " + data.delivery_id + "\n" +
+                "Latitude: " + data.latitude + "\n" +
+                "Longitude: " + data.longitude;
+
+
+        } catch (error) {
+
+            document.getElementById("location").textContent =
+                event.data;
+
+        }
+
     };
+
 
     ws.onerror = function () {
-        log("WebSocket error");
+
+        document.getElementById("connection").textContent =
+            "WebSocket error";
+
     };
 
+
     ws.onclose = function () {
-        log("WebSocket closed");
+
+        document.getElementById("connection").textContent =
+            "WebSocket closed";
+
     };
+
 }
+
 </script>
 
 </body>
 </html>
+

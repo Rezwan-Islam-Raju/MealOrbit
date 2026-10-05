@@ -41,7 +41,7 @@ async def get_cart(
 @router.post("/items",
              response_model=CartResponse
 )
-async def add_to_cart(
+async def add_to_cart_by_users(
         request: CartItemCreateRequest,
         user_id: int = Depends(require_user_id),
         db: AsyncSession = Depends(get_db)

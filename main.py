@@ -22,7 +22,7 @@ from app.api.v1.redis.redis_router import router as redis_router
 
 
 
-app = FastAPI(title="Food Delivery Backend API")
+app = FastAPI(title=" MealOrbit food Delivery Backend API")
 
 
 app.include_router(auth_router, prefix="/api/v1/auth", tags=["Authentication"])

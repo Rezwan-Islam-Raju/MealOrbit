@@ -1,4 +1,4 @@
-from sqlalchemy import (Column,Integer,String,Text,Boolean,DateTime)
+from sqlalchemy import (Column, Integer, String, Text, Boolean, DateTime, ForeignKey)
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -10,6 +10,10 @@ class FoodCategory(Base):
 
     id = Column(Integer,primary_key=True,index=True)
 
+    restaurant_id = Column(Integer,ForeignKey(
+        "restaurants.id",
+         ondelete="CASCADE"),
+        nullable=False,index=True)
     name = Column(String(100),nullable=False,unique=True,index=True)
 
     description = Column(Text,nullable=True)
@@ -21,5 +25,8 @@ class FoodCategory(Base):
     created_at = Column(DateTime,server_default=func.now(),nullable=False)
 
     updated_at = Column(DateTime,server_default=func.now(),onupdate=func.now(),nullable=False)
+
+    restaurant = relationship(
+        "Restaurant", back_populates="food_categories")
 
     foods = relationship("Food",back_populates="category")
