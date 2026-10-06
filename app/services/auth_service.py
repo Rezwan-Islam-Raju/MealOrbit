@@ -104,32 +104,32 @@ async def register_user_service(
         await db.commit()
 
         # Send verification email through Celery
-        send_email_task.delay(
-            to_email=new_user.email,
-            subject="Verify Your Food Delivery Account",
-            body=f"""
-            
-Hello {new_user.first_name},
-
-Welcome to Food Delivery!
-
-Thank you for creating an account.
-
-Your email verification token is:
-
-{raw_token}
-
-This token will expire in 5 minutes.
-
-Please use this token to verify your email address.
-
-If you did not create this account, you can safely ignore this email.
-
-Regards,
-Food Delivery Team
-
-"""
-        )
+        # send_email_task.delay(
+        #     to_email=new_user.email,
+        #     subject="Verify Your Food Delivery Account",
+        #     body=f"""
+        #
+        # Hello {new_user.first_name},
+        #
+        # Welcome to Food Delivery!
+        #
+        # Thank you for creating an account.
+        #
+        # Your email verification token is:
+        #
+        # {raw_token}
+        #
+        # This token will expire in 5 minutes.
+        #
+        # Please use this token to verify your email address.
+        #
+        # If you did not create this account, you can safely ignore this email.
+        #
+        # Regards,
+        # Food Delivery Team
+        #
+        # """
+        # )
 
         return new_user
 
