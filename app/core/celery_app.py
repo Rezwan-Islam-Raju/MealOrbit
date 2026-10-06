@@ -1,3 +1,4 @@
+import os
 from celery import Celery
 
 from app.utils.email import send_email
@@ -6,19 +7,18 @@ from app.utils.email import send_email
 
 # Celery App
 
-celery_app = Celery(
-    "food_delivery",
-    broker="amqp://guest:guest@localhost:5672//",
-    backend="rpc://"
+
+
+CELERY_BROKER_URL = os.getenv(
+    "CELERY_BROKER_URL",
+    "amqp://guest:guest@localhost:5672//"
 )
 
 
-celery_app.conf.update(
-    task_serializer="json",
-    accept_content=["json"],
-    result_serializer="json",
-    timezone="Asia/Dhaka",
-    enable_utc=False
+celery_app = Celery(
+    "food_delivery",
+    broker=CELERY_BROKER_URL,
+    backend="rpc://"
 )
 
 

@@ -4,9 +4,14 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
-from sqlalchemy.ext.asyncio import async_engine_from_config
+from sqlalchemy.ext.asyncio import create_async_engine
 
+from config.config import DATABASE_URL
 from config.database import Base
+
+
+# IMPORT ALL MODELS
+
 
 from app.models.user_model import User
 from app.models.user_activation_token_model import UserActivationToken
@@ -21,10 +26,13 @@ from app.models.food_model import Food
 
 from app.models.cart_model import Cart, CartItem
 from app.models.coupon_model import Coupon
+
 from app.models.order_model import Order, OrderItem
 from app.models.payment_model import Payment
+
 from app.models.rider_model import Rider
 from app.models.delivery_model import Delivery
+
 from app.models.review_model import Review
 from app.models.notification_model import Notification
 
@@ -39,19 +47,34 @@ if config.config_file_name is not None:
 target_metadata = Base.metadata
 
 
+
+# DATABASE URL
+
+
+# config.config থেকে DATABASE_URL
+# postgresql:// → postgresql+asyncpg:// already converted.
+
+
+# OFFLINE MIGRATION
+
+
 def run_migrations_offline() -> None:
 
-    url = config.get_main_option("sqlalchemy.url")
-
     context.configure(
-        url=url,
+        url=DATABASE_URL,
         target_metadata=target_metadata,
         literal_binds=True,
-        dialect_opts={"paramstyle": "named"},
+        dialect_opts={
+            "paramstyle": "named"
+        },
     )
 
     with context.begin_transaction():
         context.run_migrations()
+
+
+
+# ONLINE MIGRATION
 
 
 def do_run_migrations(connection: Connection) -> None:
@@ -59,6 +82,8 @@ def do_run_migrations(connection: Connection) -> None:
     context.configure(
         connection=connection,
         target_metadata=target_metadata,
+        compare_type=True,
+        compare_server_default=True,
     )
 
     with context.begin_transaction():
@@ -67,9 +92,8 @@ def do_run_migrations(connection: Connection) -> None:
 
 async def run_async_migrations() -> None:
 
-    connectable = async_engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
+    connectable = create_async_engine(
+        DATABASE_URL,
         poolclass=pool.NullPool,
     )
 
@@ -87,6 +111,10 @@ def run_migrations_online() -> None:
     asyncio.run(
         run_async_migrations()
     )
+
+
+
+# RUN
 
 
 if context.is_offline_mode():
