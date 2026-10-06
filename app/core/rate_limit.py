@@ -10,7 +10,11 @@ def rate_limit(
 ):
     async def limiter(request: Request):
 
-        client_ip = request.client.host
+        client_ip = (
+            request.client.host
+            if request.client
+            else "unknown"
+        )
 
         key = f"rate_limit:{request.url.path}:{client_ip}"
 
@@ -23,11 +27,15 @@ def rate_limit(
             )
 
         if current_count > limit:
+
             ttl = await redis_client.ttl(key)
 
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail=f"Too many requests. Try again in {ttl} seconds."
+                detail=(
+                    f"Too many requests. "
+                    f"Try again in {ttl} seconds."
+                ),
             )
 
     return limiter

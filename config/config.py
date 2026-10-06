@@ -1,99 +1,140 @@
 import hashlib
 import uuid
+import datetime
+import secrets
 
 import bcrypt
 import jwt
-import datetime
-import os
-from dotenv import load_dotenv
-import secrets
-from pydantic_settings import BaseSettings
-load_dotenv()
 
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+
+# SETTINGS
+
+
+class Settings(BaseSettings):
+
+    # APPLICATION
+
+    APP_NAME: str = "Food Delivery API"
+    ENVIRONMENT: str = "production"
+    DEBUG: bool = False
+
+    # DATABASE
+
+
+    DATABASE_URL: str
+
+    # REDIS
+
+
+    REDIS_URL: str
+
+
+    # JWT
+
+    SECRET_KEY: str
+    ALGORITHM: str = "HS256"
+
+    ACCESS_TOKEN_EXPIRE_HOURS: int = 8
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+
+
+    # SMTP
+
+
+    SMTP_HOST: str
+    SMTP_PORT: int = 587
+    SMTP_USER: str
+    SMTP_PASSWORD: str
+    SMTP_FROM: str
+
+
+    # SSL COMMERZ
+
+    SSLCOMMERZ_STORE_ID: str
+    SSLCOMMERZ_STORE_PASSWORD: str
+
+    SSLCOMMERZ_IS_SANDBOX: bool
+
+    SSLCOMMERZ_SUCCESS_URL: str
+    SSLCOMMERZ_FAIL_URL: str
+    SSLCOMMERZ_CANCEL_URL: str
+    SSLCOMMERZ_IPN_URL: str
+
+
+    # PYDANTIC SETTINGS
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=True,
+        extra="ignore",
+    )
+
+
+# SETTINGS INSTANCE
+
+
+settings = Settings()
 
 
 # DATABASE
 
-#  Read DATABASE_URL from environment (Render or Local)
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = settings.DATABASE_URL
 
-#  Fallback to local config if environment variable is missing (for local setup)
-if not DATABASE_URL:
-    DATABASE_URL = "postgresql+asyncpg://postgres:rezwan1122@localhost/food_delivery_db"
+# Render / hosted PostgreSQL may provide:
+# postgresql://...
+# SQLAlchemy async requires:
+# postgresql+asyncpg://...
 
-#  Automatically inject +asyncpg driver for Render's live database connection
-if DATABASE_URL and DATABASE_URL.startswith("postgresql://"):
-    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+if DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace(
+        "postgresql://",
+        "postgresql+asyncpg://",
+        1,
+    )
+
+
+
+# REDIS
+
+
+REDIS_URL = settings.REDIS_URL
+
 
 
 # JWT
 
 
-SECRET_KEY = os.getenv("SECRET_KEY")
-
-ALGORITHM = "HS256"
-
+SECRET_KEY = settings.SECRET_KEY
+ALGORITHM = settings.ALGORITHM
 
 
-# SMTP SERVER
+
+# SMTP
 
 
-SMTP_HOST = os.getenv("SMTP_HOST")
-
-SMTP_PORT = int(
-    os.getenv(
-        "SMTP_PORT",
-        "25"
-    )
-)
-
-SMTP_USER = os.getenv(
-    "SMTP_USER"
-)
-
-SMTP_PASSWORD = os.getenv(
-    "SMTP_PASSWORD"
-)
-
-SMTP_FROM = os.getenv(
-    "SMTP_FROM"
-)
-
-
+SMTP_HOST = settings.SMTP_HOST
+SMTP_PORT = settings.SMTP_PORT
+SMTP_USER = settings.SMTP_USER
+SMTP_PASSWORD = settings.SMTP_PASSWORD
+SMTP_FROM = settings.SMTP_FROM
 
 
 # SSL COMMERZ
 
 
-SSLCOMMERZ_STORE_ID = os.getenv(
-    "SSLCOMMERZ_STORE_ID"
-)
+SSLCOMMERZ_STORE_ID = settings.SSLCOMMERZ_STORE_ID
+SSLCOMMERZ_STORE_PASSWORD = settings.SSLCOMMERZ_STORE_PASSWORD
 
-SSLCOMMERZ_STORE_PASSWORD = os.getenv(
-    "SSLCOMMERZ_STORE_PASSWORD"
-)
+SSLCOMMERZ_IS_SANDBOX = settings.SSLCOMMERZ_IS_SANDBOX
 
-SSLCOMMERZ_IS_SANDBOX = os.getenv(
-    "SSLCOMMERZ_IS_SANDBOX",
-    "true"
-).lower() == "true"
-
-
-SSLCOMMERZ_SUCCESS_URL = os.getenv(
-    "SSLCOMMERZ_SUCCESS_URL"
-)
-
-SSLCOMMERZ_FAIL_URL = os.getenv(
-    "SSLCOMMERZ_FAIL_URL"
-)
-
-SSLCOMMERZ_CANCEL_URL = os.getenv(
-    "SSLCOMMERZ_CANCEL_URL"
-)
-
-SSLCOMMERZ_IPN_URL = os.getenv(
-    "SSLCOMMERZ_IPN_URL"
-)
+SSLCOMMERZ_SUCCESS_URL = settings.SSLCOMMERZ_SUCCESS_URL
+SSLCOMMERZ_FAIL_URL = settings.SSLCOMMERZ_FAIL_URL
+SSLCOMMERZ_CANCEL_URL = settings.SSLCOMMERZ_CANCEL_URL
+SSLCOMMERZ_IPN_URL = settings.SSLCOMMERZ_IPN_URL
 
 
 
@@ -126,12 +167,16 @@ else:
 
 
 
-
 # ACCESS TOKEN
+
+
 def encode_access_token(user_id: int, email: str):
 
     now = datetime.datetime.now(datetime.timezone.utc)
-    exp = now + datetime.timedelta(hours=8)
+
+    exp = now + datetime.timedelta(
+        hours=settings.ACCESS_TOKEN_EXPIRE_HOURS
+    )
 
     payload = {
         "user_id": user_id,
@@ -144,23 +189,36 @@ def encode_access_token(user_id: int, email: str):
     token = jwt.encode(
         payload,
         SECRET_KEY,
-        algorithm=ALGORITHM
+        algorithm=ALGORITHM,
     )
 
     return token
 
-# Decode access token
+
+
+# DECODE ACCESS TOKEN
+
 
 def decode_access_token(token: str):
-    token=jwt.decode(token,SECRET_KEY,algorithms=[ALGORITHM])
-    return token
+
+    return jwt.decode(
+        token,
+        SECRET_KEY,
+        algorithms=[ALGORITHM],
+    )
+
 
 
 # REFRESH TOKEN
+
+
 def encode_refresh_token(user_id: int):
 
     now = datetime.datetime.now(datetime.timezone.utc)
-    exp = now + datetime.timedelta(days=7)
+
+    exp = now + datetime.timedelta(
+        days=settings.REFRESH_TOKEN_EXPIRE_DAYS
+    )
 
     payload = {
         "user_id": user_id,
@@ -172,88 +230,124 @@ def encode_refresh_token(user_id: int):
     token = jwt.encode(
         payload,
         SECRET_KEY,
-        algorithm=ALGORITHM
+        algorithm=ALGORITHM,
     )
 
     return token
 
 
-# DECODE JWT TOKEN
+
+# DECODE AUTH TOKEN
+
+
 def decode_auth_token(token: str):
 
     try:
+
         decoded = jwt.decode(
             token,
             SECRET_KEY,
-            algorithms=[ALGORITHM]
+            algorithms=[ALGORITHM],
         )
 
         return decoded
 
     except jwt.ExpiredSignatureError:
+
         return None
 
     except jwt.InvalidTokenError:
+
         return None
 
+
 # PASSWORD HASH
+
+
 def hash_password(password: str):
+
     salt = bcrypt.gensalt()
-    pass_hash = bcrypt.hashpw(password.encode("utf-8"), salt)
-    return pass_hash.decode("utf-8")
+
+    password_hash = bcrypt.hashpw(
+        password.encode("utf-8"),
+        salt,
+    )
+
+    return password_hash.decode("utf-8")
+
 
 
 # PASSWORD VERIFY
-def verify_password(password: str, hashed_password: str):
+
+
+def verify_password(
+    password: str,
+    hashed_password: str,
+):
 
     try:
-        return bcrypt.checkpw(password.encode("utf-8"), hashed_password.encode("utf-8"))
+
+        return bcrypt.checkpw(
+            password.encode("utf-8"),
+            hashed_password.encode("utf-8"),
+        )
+
     except (ValueError, AttributeError):
+
         return False
 
 
+
 # ACTIVATION TOKEN
+
+
 def generate_activation_token():
+
     return secrets.token_urlsafe(32)
 
-def generate_refresh_token():
-    """
-    Generate secure random refresh token.
-    """
-    return secrets.token_urlsafe(64)
 
-def hash_refresh_token(token: str):
+def hash_activation_token(token: str):
+
     return hashlib.sha256(
         token.encode("utf-8")
     ).hexdigest()
 
-def hash_activation_token(token: str):
-    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+# REFRESH TOKEN HASH
+
+
+def generate_refresh_token():
+
+    return secrets.token_urlsafe(64)
+
+
+def hash_refresh_token(token: str):
+
+    return hashlib.sha256(
+        token.encode("utf-8")
+    ).hexdigest()
 
 
 # RESET TOKEN
+
+
 def generate_reset_token():
+
     return secrets.token_urlsafe(32)
 
+
 def hash_reset_token(token: str):
-    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+    return hashlib.sha256(
+        token.encode("utf-8")
+    ).hexdigest()
+
+
+
+# TRANSACTION ID
+
 
 def generate_transaction_id():
+
     return f"TXN-{uuid.uuid4().hex[:20].upper()}"
-
-
-
-
-class Settings(BaseSettings):
-    SECRET_KEY: str
-    ALGORITHM: str = "HS256"
-
-    SMTP_HOST: str
-    SMTP_PORT: int = 25
-    SMTP_USER: str
-    SMTP_PASSWORD: str
-    SMTP_FROM: str
-
-
-
-settings = Settings()
