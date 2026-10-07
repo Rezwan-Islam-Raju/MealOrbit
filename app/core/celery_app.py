@@ -1,7 +1,7 @@
 import os
 from celery import Celery
 
-from app.utils.email import send_email
+from app.utils.email_service import send_email
 
 
 

@@ -1,11 +1,11 @@
 from app.core.celery_app import celery_app
-from app.utils.email import send_email
+from app.utils.email_service import send_email
 
 
 @celery_app.task
 def send_password_reset_success_email(
     to_email: str,
-    user_name: str,
+    user_name: str
 ):
     subject = "Password Reset Successful"
 
