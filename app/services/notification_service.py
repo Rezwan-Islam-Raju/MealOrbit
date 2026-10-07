@@ -10,17 +10,18 @@ from app.core.celery_app import send_notification_email
 from app.schemas.notification_schema import NotificationCreateRequest
 
 
-
-
 async def create_order_notification_service(
-    db: AsyncSession,
-    user_id: int,
-    request: NotificationCreateRequest
+        db: AsyncSession,
+        user_id: int,
+        request: NotificationCreateRequest
 ):
-    #  Current logged-in user
+    print("STEP 1: service started")
+
     result = await db.execute(
         select(User).where(User.id == user_id)
     )
+
+    print("STEP 2: user query completed")
 
     current_user = result.scalar_one_or_none()
 
@@ -30,12 +31,15 @@ async def create_order_notification_service(
             detail="User not found",
         )
 
-    #  Get order
+    print("STEP 3: current user =", current_user.id, current_user.role)
+
     result = await db.execute(
         select(Order).where(
             Order.id == request.order_id
         )
     )
+
+    print("STEP 4: order query completed")
 
     order = result.scalar_one_or_none()
 
@@ -45,9 +49,11 @@ async def create_order_notification_service(
             detail="Order not found",
         )
 
-    #  Permission check
+    print("STEP 5: order =", order.id)
+
+    # Permission
     if current_user.role == UserRoleEnum.ADMIN:
-        pass
+        print("STEP 6: admin")
 
     elif current_user.role == UserRoleEnum.RESTAURANT_OWNER:
 
@@ -58,6 +64,8 @@ async def create_order_notification_service(
                 Restaurant.is_active.is_(True)
             )
         )
+
+        print("STEP 6: restaurant query completed")
 
         restaurant = restaurant_result.scalar_one_or_none()
 
@@ -73,12 +81,15 @@ async def create_order_notification_service(
             detail="Only admin and restaurant owner can create notifications",
         )
 
-    #  Get customer from order
+    print("STEP 7: permission passed")
+
     customer_result = await db.execute(
         select(User).where(
             User.id == order.user_id
         )
     )
+
+    print("STEP 8: customer query completed")
 
     customer = customer_result.scalar_one_or_none()
 
@@ -88,7 +99,8 @@ async def create_order_notification_service(
             detail="Customer not found",
         )
 
-    #  Create notification
+    print("STEP 9: customer =", customer.id)
+
     notification = Notification(
         user_id=customer.id,
         title=request.title,
@@ -96,17 +108,17 @@ async def create_order_notification_service(
         notification_type=request.notification_type,
     )
 
+    print("STEP 10: notification object created")
+
     db.add(notification)
 
     await db.commit()
+
+    print("STEP 11: commit completed")
+
     await db.refresh(notification)
 
-    #  Send email
-    send_notification_email.delay(
-        customer.email,
-        request.title,
-        request.message,
-    )
+    print("STEP 12: refresh completed")
 
     return notification
 

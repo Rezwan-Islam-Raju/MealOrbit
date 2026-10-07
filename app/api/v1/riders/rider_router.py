@@ -6,14 +6,13 @@ from app.schemas.rider_schema import (
     RiderResponse,
     RiderCreateRequest,
     RiderStatusRequest,
-    RiderUpdateRequest,
+    RiderUpdateRequest
 )
 from app.services.rider_service import (
     create_rider_service,
-    get_my_rider_service,
     update_rider_status_service,
     update_rider_service,
-    rider_deactivate_service,
+    rider_deactivate_service, get_rider_service
 )
 from config.database import get_db
 
@@ -38,24 +37,27 @@ async def create_rider(
     return result
 
 
-#--------- GET MY RIDER API ----------
+# --------- GET MY RIDER API ----------
+
 @router.get(
-    "/me",
+    "/{rider_id}",
     response_model=RiderResponse
 )
-async def get_my_rider(
-    user_id: int = Depends(require_user_id),
-    db: AsyncSession = Depends(get_db)
+async def get_rider(
+    rider_id: int,
+    db: AsyncSession = Depends(get_db),
+    user_id: int = Depends(require_user_id)
 ):
-    result = await get_my_rider_service(
+    result = await get_rider_service(
         db=db,
-        user_id=user_id
+        user_id=user_id,
+        rider_id=rider_id
     )
 
     return result
 
 
-#------------- UPDATE RIDER API ----------
+# ------------- UPDATE RIDER API ----------
 
 @router.patch(
     "/profile",
@@ -75,7 +77,7 @@ async def update_rider(
     return result
 
 
-#---------- UPDATE RIDER STATUS  API -----------
+# ---------- UPDATE RIDER STATUS API -----------
 
 @router.patch(
     "/status",

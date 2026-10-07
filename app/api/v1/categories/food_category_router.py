@@ -23,30 +23,26 @@ router = APIRouter()
 
 
 
+
 # ---------CREATE CATEGORY API --------
 
 @router.post(
     "/",
-    response_model=FoodCategoryResponse,
-    status_code=status.HTTP_201_CREATED
-)
+    status_code=status.HTTP_201_CREATED, response_model=FoodCategoryResponse)
 async def create_category(
     request: FoodCategoryCreateRequest,
-    db: AsyncSession = Depends(get_db)
-
+    db: AsyncSession = Depends(get_db),
+    user_id: int = Depends(require_user_id)
 ):
-    try:
-        category = await food_create_category_service(
-            db=db,
-            request=request
+    result = await food_create_category_service(
+        request=request,
+        db=db,
+        user_id=user_id
+    )
 
-        )
+    return result
 
-        return category
 
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,detail=str(e))
 
 #------ GET ALL CATEGORIES SERVICE API -------
 

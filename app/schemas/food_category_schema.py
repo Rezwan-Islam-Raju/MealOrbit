@@ -5,9 +5,10 @@ from pydantic import BaseModel, Field
 # ---------- Request Schemas ----------
 
 class FoodCategoryCreateRequest(BaseModel):
-    name: str = Field(min_length=2, max_length=100)
-    description: str | None = Field(default=None, max_length=500)
-    img_url: str = Field(max_length=500)
+    restaurant_id: int
+    name: str
+    description: str | None = None
+    img_url: str | None = None
 
 
 class FoodCategoryUpdateRequest(BaseModel):

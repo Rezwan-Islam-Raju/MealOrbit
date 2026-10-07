@@ -10,8 +10,6 @@ from app.schemas.restaurant_hours_schema import RestaurantHoursCreateRequest, Re
 
 
 
-
-
 async def create_restaurant_hours_service(
     db: AsyncSession,
     restaurant_id: int,
@@ -82,10 +80,12 @@ async def create_restaurant_hours_service(
         )
 
     # Validate opening and closing time
+    opening_time = None
+    closing_time = None
+
     if not request.is_closed:
 
-        if (
-            request.opening_time is None
+        if (request.opening_time is None
             or request.closing_time is None
         ):
             raise HTTPException(
@@ -93,7 +93,12 @@ async def create_restaurant_hours_service(
                 detail="Opening and closing time are required"
             )
 
-        if request.opening_time >= request.closing_time:
+        # Remove timezone information before comparison
+        opening_time = request.opening_time.replace(tzinfo=None)
+        closing_time = request.closing_time.replace(tzinfo=None)
+
+        # Validate time order
+        if opening_time >= closing_time:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Opening time must be before closing time"
@@ -103,8 +108,8 @@ async def create_restaurant_hours_service(
     restaurant_hours = RestaurantHours(
         restaurant_id=restaurant_id,
         day_of_week=request.day_of_week,
-        opening_time=request.opening_time,
-        closing_time=request.closing_time,
+        opening_time=opening_time,
+        closing_time=closing_time,
         is_closed=request.is_closed
     )
 
@@ -114,7 +119,6 @@ async def create_restaurant_hours_service(
     await db.refresh(restaurant_hours)
 
     return restaurant_hours
-
 
 async def get_restaurant_hours_service(
     db: AsyncSession,

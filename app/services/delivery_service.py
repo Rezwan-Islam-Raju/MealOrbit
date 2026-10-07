@@ -170,11 +170,11 @@ async def assign_rider_service(
 
     #  Send customer notification through Celery
 
-    send_order_status_notification.delay(
-        user_id=order.user_id,
-        order_id=order.id,
-        new_status=OrderStatus.RIDER_ASSIGNED.value
-    )
+#   send_order_status_notification.delay(
+#      user_id=order.user_id,
+#       order_id=order.id,
+#        new_status=OrderStatus.RIDER_ASSIGNED.value
+#    )
 
     return delivery
 

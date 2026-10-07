@@ -13,10 +13,37 @@ from app.schemas.food_category_schema import (
     FoodCategoryUpdateRequest,
 )
 
+
+
+
 async def food_create_category_service(
     request: FoodCategoryCreateRequest,
-    db: AsyncSession
+    db: AsyncSession,
+    user_id: int
 ):
+    # Get current user
+    user_result = await db.execute(
+        select(User).where(User.id == user_id)
+    )
+
+    user = user_result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    # Only ADMIN and RESTAURANT_OWNER can create category
+    if user.role not in [
+        UserRoleEnum.ADMIN,
+        UserRoleEnum.RESTAURANT_OWNER
+    ]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only admin or restaurant owner can create food category"
+        )
+
     name = request.name.strip()
 
     if not name:
@@ -25,8 +52,36 @@ async def food_create_category_service(
             detail="Category name cannot be empty"
         )
 
+    # Get restaurant
+    restaurant_result = await db.execute(
+        select(Restaurant).where(
+            Restaurant.id == request.restaurant_id,
+            Restaurant.is_active.is_(True)
+        )
+    )
+
+    restaurant = restaurant_result.scalar_one_or_none()
+
+    if not restaurant:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Restaurant not found"
+        )
+
+    # Restaurant owner can only create category for own restaurant
+    if user.role == UserRoleEnum.RESTAURANT_OWNER:
+
+        if restaurant.owner_id != user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only create categories for your own restaurant"
+            )
+
+    # Check duplicate category within same restaurant
     result = await db.execute(
-        select(FoodCategory).where(FoodCategory.name.ilike(name),
+        select(FoodCategory).where(
+            FoodCategory.restaurant_id == request.restaurant_id,
+            FoodCategory.name.ilike(name),
             FoodCategory.is_active.is_(True)
         )
     )
@@ -36,10 +91,12 @@ async def food_create_category_service(
     if existing_category:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Food category already exists"
+            detail="Food category already exists for this restaurant"
         )
 
+    # Create category
     category = FoodCategory(
+        restaurant_id=request.restaurant_id,
         name=name,
         description=request.description,
         img_url=request.img_url,
@@ -55,6 +112,8 @@ async def food_create_category_service(
     await delete_cache("categories:all")
 
     return category
+
+
 
 
 async def food_get_all_categories_service(

@@ -161,13 +161,13 @@ async def create_order_from_cart_service(
         db.add(order_item)
 
     # Prepare data for Celery
-    order_items_data = [
-        {
-            "food_name": food.name,
-            "quantity": cart_item.quantity,
-        }
-        for cart_item, food in rows
-    ]
+    # order_items_data = [
+    #     {
+    #         "food_name": food.name,
+    #         "quantity": cart_item.quantity,
+    #     }
+    #     for cart_item, food in rows
+    # ]
 
     # Remove cart items
     for cart_item, food in rows:
@@ -180,35 +180,35 @@ async def create_order_from_cart_service(
     await db.commit()
 
     # Redis Pub/Sub notification
-    await publish_message(
-        "notification_events",
-        {
-            "user_id": order.user_id,
-            "title": "Order Placed",
-            "message": (
-                f"Your order #{order.id} "
-                f"has been placed successfully."
-            ),
-            "notification_type": "ORDER"
-        }
-    )
+#    await publish_message(
+#        "notification_events",
+#       {
+#           "user_id": order.user_id,
+#           "title": "Order Placed",
+#            "message": (
+#                f"Your order #{order.id} "
+#               f"has been placed successfully."
+#            ),
+#            "notification_type": "ORDER"
+#        }
+#    )
 
     # Get customer email
-    customer_result = await db.execute(
-        select(User).where(
-            User.id == order.user_id
-        )
-    )
+#   customer_result = await db.execute(
+#      select(User).where(
+#           User.id == order.user_id
+#      )
+#    )
 
-    customer = customer_result.scalar_one_or_none()
+#    customer = customer_result.scalar_one_or_none()
 
-    if customer:
+#    if customer:
 
-        send_order_confirmation_email.delay(
-            customer_email=customer.email,
-            order_id=order.id,
-            order_items=order_items_data
-        )
+#        send_order_confirmation_email.delay(
+#           customer_email=customer.email,
+#            order_id=order.id,
+#           order_items=order_items_data
+#       )
 
     # Reload order with items
     result = await db.execute(
@@ -265,7 +265,7 @@ async def get_my_order_by_id_service(
 async def cancel_order_service(
     db: AsyncSession,
     user_id: int,
-    order_id: int,
+    order_id: int
 ):
     result = await db.execute(select(Order)
         .where(
@@ -296,18 +296,18 @@ async def cancel_order_service(
 
     await db.commit()
 
-    await publish_message(
-        "notification_events",
-        {
-            "user_id": order.user_id,
-            "title": "Order Cancelled",
-            "message": (
-                f"Your order #{order.id} "
-                f"has been cancelled successfully."
-            ),
-            "notification_type": "ORDER"
-        }
-    )
+#    await publish_message(
+#        "notification_events",
+#        {
+#            "user_id": order.user_id,
+#            "title": "Order Cancelled",
+#            "message": (
+#               f"Your order #{order.id} "
+#               f"has been cancelled successfully."
+#            ),
+#            "notification_type": "ORDER"
+#        }
+#   )
     # Reload order with items
     result = await db.execute(select(Order)
         .where(
@@ -560,7 +560,6 @@ async def update_restaurant_order_status_service(
         )
 
     # Allowed status transitions
-
     allowed_transitions = {
 
         OrderStatus.PENDING: {
@@ -569,8 +568,7 @@ async def update_restaurant_order_status_service(
         },
 
         OrderStatus.CONFIRMED: {
-            OrderStatus.PREPARING,
-            OrderStatus.CANCELLED
+            OrderStatus.PREPARING
         },
 
         OrderStatus.PREPARING: {
@@ -578,15 +576,14 @@ async def update_restaurant_order_status_service(
         },
     }
 
+    # Check status transition
+
     allowed_statuses = allowed_transitions.get(
         order.status,
         set(),
     )
 
-    # Check status transition
-
     if new_status not in allowed_statuses:
-
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=(
@@ -595,7 +592,6 @@ async def update_restaurant_order_status_service(
                 f"to {new_status.value}"
             ),
         )
-
 
     # Payment check
     # Payment must be paid before
@@ -633,11 +629,11 @@ async def update_restaurant_order_status_service(
     # Send notification through Celery
 
 
-    send_order_status_notification.delay(
-        user_id=order.user_id,
-        order_id=order.id,
-        new_status=new_status.value
-    )
+#   send_order_status_notification.delay(
+#       user_id=order.user_id,
+#       order_id=order.id,
+#       new_status=new_status.value
+#  )
 
     # Reload order with relationships
 
