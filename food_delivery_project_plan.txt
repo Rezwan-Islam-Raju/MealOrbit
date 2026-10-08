@@ -1,83 +1,102 @@
-# 🍔 MealOrbit food Delivery Backend API
+# 🍔 MealOrbit — Food Delivery Backend API
 
-## 🎯 Project Goal
-
-একটি production-style **Food Delivery Backend API** তৈরি করা হবে যেখানে Customer, Restaurant, Food, Cart, Order, Payment, Rider, Review, Notification এবং AI Assistant থাকবে।
-
-Project-এর মূল লক্ষ্য হবে শুধু CRUD না করে **real-world backend architecture** practice করা।
+## Current Development Plan
 
 ---
 
-# 🛠️ Technology Stack
+# 🎯 Project Goal
 
-### Backend
+MealOrbit is a production-style **Food Delivery Backend API** built with FastAPI.
 
-* FastAPI
-* Python
-* Async SQLAlchemy
-* PostgreSQL
-* Alembic
-
-### Authentication
-
-* JWT
-* Access Token
-* Refresh Token
-* bcrypt
-* Email Verification
-* Forgot/Reset Password
-
-### Background Processing
-
-* RabbitMQ
-* Celery
-* Flower
-
-### Caching / Real-time
-
-* Redis
-* WebSocket
-
-### Payment
-
-* SSLCOMMERZ Sandbox
-
-### AI
-
-* Ollama
-* AI Food Recommendation
-* AI Customer Support
-
-### DevOps
-
-* Docker
-* Docker Compose
-* Git
-* GitHub
-
-### Testing
-
-* Pytest
+The project focuses on real-world backend development including authentication, role-based authorization, async database operations, background processing, caching, real-time communication, payment integration, AI integration, testing, Docker, and deployment.
 
 ---
 
-# 📁 Main Modules
+# 🛠️ Current Technology Stack
 
-## 1. Authentication
+## Backend
 
-Features:
+```text
+Python
+FastAPI
+Async SQLAlchemy
+PostgreSQL
+Alembic
+```
 
-* Register
-* Login
-* Logout
-* JWT Access Token
-* Refresh Token
-* Email Verification
-* Forgot Password
-* Reset Password
-* Change Password
+## Authentication
 
-Roles:
+```text
+JWT
+Access Token
+Refresh Token
+bcrypt
+Email Verification
+Forgot Password
+Password Reset
+Change Password
+```
+
+## Background Processing
+
+```text
+RabbitMQ
+Celery
+Flower
+```
+
+RabbitMQ and Celery are configured and tested.
+
+The Celery worker is currently disabled/commented and will be enabled for production later.
+
+## Caching & Real-time
+
+```text
+Redis
+Redis Pub/Sub
+WebSocket
+```
+
+## Payment
+
+```text
+SSLCOMMERZ Sandbox
+```
+
+## AI
+
+```text
+Hugging Face
+Transformers
+Gemma 3 1B
+PyTorch
+```
+
+Gemma 3 1B is integrated and tested locally.
+
+It is currently not deployed with the main Render API because the model requires more memory than the current API hosting environment provides.
+
+## DevOps
+
+```text
+Docker
+Docker Compose
+Git
+GitHub
+Render
+```
+
+## Testing
+
+```text
+Pytest
+```
+
+---
+
+# 👥 User Roles
+
+The project uses the existing `User` model for role management.
 
 ```text
 CUSTOMER
@@ -86,51 +105,143 @@ RIDER
 ADMIN
 ```
 
+No separate Admin model is required.
+
 ---
 
-# 2. User Management
+# ✅ Completed Development
 
-Customer features:
+## 1. Project Foundation
 
-* View Profile
-* Update Profile
-* Upload Profile Image
-* Add Phone
-* Manage Addresses
-* Default Address
-
-Address:
+Completed:
 
 ```text
-id
-user_id
-address
-city
-area
-postal_code
-latitude
-longitude
-is_default
-created_at
-updated_at
+Project Structure
+FastAPI Setup
+Async SQLAlchemy
+PostgreSQL
+Alembic
+Environment Configuration
+Docker Configuration
+Git
+GitHub
+```
+
+Current project structure:
+
+```text
+app/
+config/
+alembic/
+tasks/
+tests/
+docker/
+uploads/
+.AIModel/
+main.py
+requirements.txt
+README.md
 ```
 
 ---
 
-# 3. Restaurant
+# ✅ 2. Authentication System
 
-Restaurant owner can:
+Authentication system has been completed.
 
-* Create Restaurant
-* Update Restaurant
-* Delete Restaurant
-* Restaurant Profile
-* Upload Restaurant Image
-* Opening Hours
-* Close/Open Restaurant
-* View Orders
+Implemented:
 
-Restaurant status:
+```text
+User Registration
+User Login
+JWT Access Token
+Refresh Token
+Logout
+Email Verification
+Forgot Password
+Password Reset
+Change Password
+Password Hashing
+```
+
+Authentication flow:
+
+```text
+Register
+   ↓
+Email Verification
+   ↓
+Login
+   ↓
+Access Token + Refresh Token
+   ↓
+Protected API
+```
+
+---
+
+# ✅ 3. User Management
+
+User management functionality has been completed.
+
+Implemented:
+
+```text
+View Profile
+Update Profile
+Profile Image Upload
+Profile Image Delete
+Phone Update
+Account Deactivation
+```
+
+Profile update supports partial updates, so existing values remain unchanged when fields are omitted.
+
+---
+
+# ✅ 4. Role-Based Authorization
+
+Role-based authorization has been implemented.
+
+Available roles:
+
+```text
+CUSTOMER
+RESTAURANT_OWNER
+RIDER
+ADMIN
+```
+
+Protected APIs use role-based access control.
+
+Examples:
+
+```text
+Admin-only APIs
+Restaurant Owner APIs
+Customer APIs
+Rider APIs
+```
+
+---
+
+# ✅ 5. Restaurant Module
+
+Restaurant module has been implemented.
+
+Completed functionality:
+
+```text
+Restaurant Creation
+Restaurant Update
+Restaurant Delete
+Restaurant Listing
+Restaurant Status
+Restaurant Owner Authorization
+Admin Authorization
+```
+
+Restaurant statuses:
 
 ```text
 OPEN
@@ -138,66 +249,174 @@ CLOSED
 BUSY
 ```
 
+Admin and restaurant-owner permissions are separated.
+
 ---
 
-# 4. Food Category
+# ✅ 6. Food Category Module
 
-Example:
+Food category management has been implemented.
+
+Completed:
 
 ```text
-Burger
-Pizza
-Chicken
-Rice
-Drinks
-Dessert
+Create Category
+Update Category
+Delete Category
+Get Categories
 ```
 
-Features:
-
-* Create Category
-* Update Category
-* Delete Category
-* Get Categories
-* Search Category
+Category management is restricted to authorized roles.
 
 ---
 
-# 5. Food / Menu
+# ✅ 7. Food / Menu Module
 
-Restaurant can create food items.
+Food management has been implemented.
 
-Fields:
+Completed:
 
 ```text
-id
-restaurant_id
-category_id
-name
-description
-price
-image_url
-is_available
-created_at
-updated_at
+Create Food
+Update Food
+Delete Food
+Get Food
+Search Food
+Filter Food
+Pagination
+Availability Management
 ```
 
-Features:
+Redis caching has also been prepared for food search, filtering, and pagination.
 
-* Create Food
-* Update Food
-* Delete Food
-* Get Food
-* Search Food
-* Filter by Category
-* Filter by Restaurant
-* Availability Management
+Cache key patterns:
+
+```text
+foods:pagination:*
+foods:search:*
+foods:filter:*
+```
 
 ---
 
-# 6. Cart
+# ✅ 8. Redis Integration
 
-Customer can:
+Redis has been integrated and tested.
+
+Current usage:
+
+```text
+Redis Connection
+Redis Cache
+Redis Pub/Sub
+Real-time Communication
+```
+
+Redis Pub/Sub has been successfully tested during development.
+
+---
+
+# ✅ 9. WebSocket / Real-time Location
+
+Real-time delivery tracking has been implemented using:
+
+```text
+WebSocket
++
+Redis Pub/Sub
+```
+
+Architecture:
+
+```text
+Rider
+   ↓
+Redis Channel
+   ↓
+WebSocket
+   ↓
+Customer
+```
+
+Delivery location channel:
+
+```text
+delivery_location:{delivery_id}
+```
+
+A real-time delivery location test has been successfully completed.
+
+---
+
+# ✅ 10. RabbitMQ
+
+RabbitMQ has been configured using Docker.
+
+Current setup:
+
+```text
+RabbitMQ
+RabbitMQ Management
+Celery Broker
+```
+
+RabbitMQ is used as the message broker for Celery.
+
+---
+
+# ✅ 11. Celery
+
+Celery has been integrated with the project.
+
+Implemented tasks include:
+
+```text
+Email Tasks
+Notification Tasks
+Order Confirmation Email
+Order Status Notification
+Password Reset Success Email
+```
+
+Current state:
+
+```text
+Celery App       ✅
+RabbitMQ         ✅
+Tasks            ✅
+Flower           ✅
+Worker           🚧 Disabled / Commented
+```
+
+The Celery worker will be enabled for production later.
+
+---
+
+# ✅ 12. Flower
+
+Flower has been configured and tested for Celery monitoring.
+
+Used for:
+
+```text
+Monitor Celery Tasks
+Monitor Workers
+Monitor Task Status
+```
+
+---
+
+# 🚧 Current Development
+
+The following features are currently being developed or will be completed next.
+
+---
+
+# 13. Cart
+
+Cart functionality is currently under development.
+
+Target functionality:
 
 ```text
 Add Food
@@ -207,51 +426,33 @@ Clear Cart
 View Cart
 ```
 
-Cart calculation:
+---
+
+# 14. Coupon
+
+Coupon functionality is currently under development.
+
+Target functionality:
 
 ```text
-Food Price × Quantity
-        +
-Delivery Fee
-        +
-Tax
-        -
-Discount
-        =
-Grand Total
+Create Coupon
+Apply Coupon
+Remove Coupon
+Expiry Date
+Minimum Order
+Maximum Discount
+Percentage Discount
+Fixed Discount
+Usage Limit
 ```
 
 ---
 
-# 7. Coupon / Discount
+# 15. Order System
 
-Features:
+Order management is currently under development.
 
-* Create Coupon
-* Apply Coupon
-* Remove Coupon
-* Expiry Date
-* Minimum Order Amount
-* Maximum Discount
-* Percentage Discount
-* Fixed Discount
-* Usage Limit
-
-Example:
-
-```text
-FOOD20
-
-20% OFF
-Minimum Order: 500 BDT
-Maximum Discount: 200 BDT
-```
-
----
-
-# 8. Order
-
-Order flow:
+Target flow:
 
 ```text
 Cart
@@ -262,20 +463,18 @@ Create Order
  ↓
 Payment
  ↓
-Restaurant Confirmation
+Restaurant
  ↓
-Food Preparing
+Preparing
  ↓
-Rider Assigned
+Rider Assignment
  ↓
-Picked Up
- ↓
-Out for Delivery
+Delivery
  ↓
 Delivered
 ```
 
-Order status:
+Planned order statuses:
 
 ```text
 PENDING
@@ -291,775 +490,502 @@ CANCELLED
 
 ---
 
-# 9. Order Item
-
-একটি order-এর ভিতরে multiple food থাকতে পারবে।
-
-Example:
-
-```text
-Order #1001
-
-Burger × 2
-Pizza × 1
-Coke × 2
-```
-
-Order Item fields:
-
-```text
-id
-order_id
-food_id
-quantity
-price
-subtotal
-```
-
-Important:
-
-Order তৈরি হওয়ার সময় food-এর বর্তমান price `OrderItem.price`-এ save করতে হবে।
-
-কারণ পরে food-এর price পরিবর্তন হলেও পুরোনো order-এর price পরিবর্তন হওয়া উচিত নয়।
-
----
-
-# 10. Checkout
-
-Checkout-এর সময়:
-
-```text
-Cart
- ↓
-Validate Food Availability
- ↓
-Calculate Subtotal
- ↓
-Apply Coupon
- ↓
-Calculate Tax
- ↓
-Calculate Delivery Fee
- ↓
-Calculate Grand Total
- ↓
-Create Order
-```
-
-এখানে transaction এবং validation properly handle করতে হবে।
-
----
-
-# 11. Payment
+# 16. Payment Integration
 
 Payment provider:
 
-**SSLCOMMERZ Sandbox**
+```text
+SSLCOMMERZ Sandbox
+```
 
-Payment flow:
+Target flow:
 
 ```text
-Create Order
-      ↓
 Create Payment
       ↓
 SSLCOMMERZ
-      ↓
-Customer Payment
       ↓
 Success / Fail / Cancel
       ↓
 Callback / IPN
       ↓
-Verify Payment
+Payment Verification
       ↓
-Update Payment Status
+Update Payment
       ↓
-Update Order Status
-```
-
-Payment status:
-
-```text
-PENDING
-PROCESSING
-PAID
-FAILED
-CANCELLED
-REFUNDED
+Update Order
 ```
 
 ---
 
-# 12. Rider / Delivery
+# 17. Rider & Delivery
 
-Rider features:
+Rider and delivery functionality is currently under development.
 
-* Rider Registration
-* Rider Profile
-* Online/Offline Status
-* Accept Delivery
-* Reject Delivery
-* View Assigned Orders
-* Update Delivery Status
-
-Flow:
+Target features:
 
 ```text
-Order Ready
-     ↓
-Find Available Rider
-     ↓
-Assign Rider
-     ↓
-Rider Accepts
-     ↓
-Food Pickup
-     ↓
-Delivery
-     ↓
-Delivered
-```
-
----
-
-# 13. Real-time Tracking
-
-Technology:
-
-```text
-WebSocket
-+
-Redis
-```
-
-Customer দেখতে পারবে:
-
-```text
-Restaurant accepted
-       ↓
-Food preparing
-       ↓
-Rider assigned
-       ↓
-Rider picked up
-       ↓
-Out for delivery
-       ↓
-Delivered
-```
-
-Future enhancement:
-
-```text
-Rider GPS
- ↓
-Redis
- ↓
-WebSocket
- ↓
-Customer
-```
-
----
-
-# 14. Notification System
-
-Notification types:
-
-### Email
-
-* Welcome Email
-* Account Verification
-* Password Reset
-* Order Confirmation
-* Payment Confirmation
-* Order Delivered
-
-### In-App
-
-* Order Status
-* Payment Status
-* Rider Assigned
-* Promotional Notification
-
-Background processing:
-
-```text
-FastAPI
-   ↓
-Celery
-   ↓
-RabbitMQ
-   ↓
-Worker
-   ↓
-Email / Notification
-```
-
----
-
-# 15. Review & Rating
-
-Customer can review:
-
-* Restaurant
-* Food
-* Delivery
-
-Fields:
-
-```text
-rating
-comment
-user_id
-restaurant_id
-food_id
-order_id
-created_at
-```
-
-Rating:
-
-```text
-1 ⭐
-2 ⭐
-3 ⭐
-4 ⭐
-5 ⭐
-```
-
-একজন customer একই order/food-এর জন্য duplicate review করতে পারবে না।
-
----
-
-# 16. Search & Filtering
-
-Food search:
-
-```text
-/search?query=burger
-```
-
-Filter:
-
-```text
-Category
-Restaurant
-Price
-Rating
-Availability
-```
-
-Sorting:
-
-```text
-Price Low → High
-Price High → Low
-Rating
-Newest
-Popular
-```
-
-Pagination অবশ্যই রাখতে হবে।
-
----
-
-# 17. Redis
-
-Redis ব্যবহার হবে:
-
-### Cache
-
-```text
-Popular Foods
-Restaurant List
-Food Categories
-```
-
-### Temporary Data
-
-```text
-OTP
-Verification Token
-Rate Limit
-```
-
-### Real-time
-
-```text
+Rider Profile
+Online / Offline Status
+Assigned Orders
+Accept Delivery
+Reject Delivery
+Delivery Status
 Rider Location
-Order Status
-WebSocket Pub/Sub
 ```
 
 ---
 
-# 18. Celery + RabbitMQ
+# 18. Notifications
 
-Celery background jobs:
+Basic notification tasks have already been implemented through Celery and RabbitMQ.
+
+Completed notification-related tasks:
 
 ```text
-Send Email
-Send Notification
-Process Order Notification
-Generate Reports
-Cleanup Expired Tokens
+Email Notifications
+Order Confirmation
+Order Status
+Password Reset Success
+```
+
+Remaining work:
+
+```text
+In-App Notifications
+Notification History
+Read / Unread Status
+```
+
+---
+
+# 🚧 19. Reviews & Ratings
+
+Review and rating functionality is planned.
+
+Target features:
+
+```text
+Restaurant Review
+Food Review
+Delivery Review
+Rating
+Comment
+Duplicate Review Protection
+```
+
+---
+
+# ✅ 20. Admin API
+
+Admin API has been implemented using the existing `User` model with the `ADMIN` role.
+
+Completed:
+
+```text
+View All Users
+Block User
+Unblock User
+Delete User
+Change User Role
+```
+
+Supported role changes:
+
+```text
+CUSTOMER
+RESTAURANT_OWNER
+RIDER
+```
+
+An admin cannot change, block, or delete their own account through these APIs.
+
+Future Admin features:
+
+```text
+Restaurant Management
+Order Management
+Payment Management
+Reports
+Statistics
+```
+
+---
+
+# ✅ 21. Local AI Integration
+
+Gemma 3 1B has been successfully integrated and tested locally.
+
+Current stack:
+
+```text
+Hugging Face
+Transformers
+Gemma 3 1B
+PyTorch
+FastAPI
 ```
 
 Architecture:
 
 ```text
 FastAPI
-    ↓
-Celery Task
-    ↓
+   ↓
+AI Service
+   ↓
+Gemma 3 1B
+```
+
+Local model location:
+
+```text
+.AIModel/gemma
+```
+
+The AI API has been successfully tested during local development.
+
+---
+
+# 🚧 22. AI Food Recommendation
+
+AI food recommendation is planned using the existing Gemma integration.
+
+Target flow:
+
+```text
+User Request
+      ↓
+FastAPI
+      ↓
+Food Database
+      ↓
+Filter Available Foods
+      ↓
+Gemma
+      ↓
+Recommendation
+```
+
+Example:
+
+```text
+Budget: 500 BDT
+Food: Chicken
+Preference: Spicy
+```
+
+The backend should first filter the database and provide only relevant food information to the AI.
+
+---
+
+# 🚧 23. AI Customer Support
+
+AI customer support is planned.
+
+Example:
+
+```text
+User:
+Where is my order?
+```
+
+Target architecture:
+
+```text
+User
+ ↓
+FastAPI
+ ↓
+Authentication
+ ↓
+Backend Service
+ ↓
+Order Data
+ ↓
+Gemma
+ ↓
+Response
+```
+
+The AI will not receive unrestricted access to sensitive database information.
+
+---
+
+# 🚧 24. Production AI Deployment
+
+Gemma 3 1B works locally but is not currently deployed with the main Render API.
+
+Reason:
+
+```text
+Gemma 3 1B
++
+PyTorch
++
+Transformers
+```
+
+requires more memory than the current API hosting environment can reliably provide.
+
+Planned production architecture:
+
+```text
+Main MealOrbit API
+        ↓
+Separate AI API
+        ↓
+Gemma 3 1B
+```
+
+The AI service will be deployed separately on a higher-memory environment.
+
+---
+
+# 🚧 25. Testing
+
+Pytest has been added to the project and testing is currently being expanded.
+
+Current testing focus:
+
+```text
+Authentication
+Users
+Restaurants
+Food
+Redis
+WebSocket
+Admin
+Celery Tasks
+```
+
+Next testing targets:
+
+```text
+Cart
+Coupon
+Orders
+Payments
+Riders
+Reviews
+AI APIs
+```
+
+---
+
+# 🚧 26. Production Deployment
+
+Main API deployment has been attempted on Render.
+
+Current architecture:
+
+```text
+MealOrbit FastAPI
+        ↓
+Render
+```
+
+The main API can start successfully, but the local Gemma model should not be loaded inside the same low-memory API service.
+
+Production architecture will therefore separate:
+
+```text
+Main API
++
+AI Service
++
+Database
++
+Redis
++
+Background Worker
+```
+
+---
+
+# 🚧 27. Production Celery Worker
+
+Celery worker is currently disabled/commented.
+
+Before production:
+
+```text
 RabbitMQ
-    ↓
+   ↓
 Celery Worker
-    ↓
-Task Processing
-```
-
-Flower:
-
-```text
-Celery
    ↓
-Flower
-   ↓
-Monitor Tasks
+Background Tasks
+```
+
+The production worker will handle:
+
+```text
+Emails
+Notifications
+Order Events
+Other Background Tasks
 ```
 
 ---
 
-# 19. AI Food Assistant 🤖
+# 🚧 28. CI/CD & Monitoring
 
-Ollama ব্যবহার করে AI assistant তৈরি করা হবে।
-
-Example:
+Future production improvements:
 
 ```text
-User:
-
-আমার budget 500 টাকা।
-Chicken খাবার চাই।
-Spicy খাবার চাই।
-```
-
-AI:
-
-```text
-আপনার জন্য:
-
-1. Chicken Burger - 250 BDT
-2. Spicy Chicken Pizza - 400 BDT
-3. Chicken Wings - 300 BDT
-```
-
-AI database-এর available food data ব্যবহার করে recommendation দেবে।
-
----
-
-# 20. AI Customer Support
-
-Example:
-
-```text
-User:
-আমার order #1024 কোথায়?
-```
-
-AI:
-
-```text
-Order #1024 বর্তমানে
-"Out for Delivery" status-এ আছে।
-
-Rider আপনার order নিয়ে
-delivery-এর পথে আছে।
-```
-
-AI-কে database-এর sensitive data সরাসরি unrestricted access দেওয়া যাবে না।
-
-Backend controlled tools/functions দিয়ে data দিতে হবে।
-
----
-
-# 21. Admin Panel / Admin API
-
-Admin features:
-
-### Users
-
-```text
-View Users
-Block User
-Unblock User
-Delete User
-```
-
-### Restaurants
-
-```text
-Approve Restaurant
-Reject Restaurant
-Block Restaurant
-```
-
-### Orders
-
-```text
-View All Orders
-Filter Orders
-Cancel Order
-```
-
-### Payments
-
-```text
-View Payments
-Payment Statistics
-Refund Management
-```
-
-### Reports
-
-```text
-Total Orders
-Total Revenue
-Total Users
-Top Restaurants
-Top Foods
+GitHub Actions
+Automated Testing
+Automated Deployment
+Environment Management
+Application Monitoring
+Error Logging
+Health Checks
 ```
 
 ---
 
-# 22. Security
+# 📊 Current Project Status
 
-Must implement:
+| Feature                | Status         |
+| ---------------------- | -------------- |
+| FastAPI                | ✅ Completed    |
+| Async SQLAlchemy       | ✅ Completed    |
+| PostgreSQL             | ✅ Completed    |
+| Alembic                | ✅ Completed    |
+| Docker                 | ✅ Completed    |
+| Git / GitHub           | ✅ Completed    |
+| JWT Authentication     | ✅ Completed    |
+| Refresh Token          | ✅ Completed    |
+| Email Verification     | ✅ Completed    |
+| Password Reset         | ✅ Completed    |
+| User Profile           | ✅ Completed    |
+| Role-Based Access      | ✅ Completed    |
+| Restaurant             | ✅ Completed    |
+| Food Category          | ✅ Completed    |
+| Food / Menu            | ✅ Completed    |
+| Redis                  | ✅ Integrated   |
+| Redis Pub/Sub          | ✅ Tested       |
+| WebSocket              | ✅ Tested       |
+| RabbitMQ               | ✅ Integrated   |
+| Celery                 | ✅ Integrated   |
+| Celery Tasks           | ✅ Tested       |
+| Flower                 | ✅ Tested       |
+| Celery Worker          | 🚧 Disabled    |
+| Admin API              | ✅ Completed    |
+| Cart                   | 🚧 In Progress |
+| Coupon                 | 🚧 In Progress |
+| Order                  | 🚧 In Progress |
+| SSLCOMMERZ             | 🚧 In Progress |
+| Rider / Delivery       | 🚧 In Progress |
+| Notifications          | 🚧 In Progress |
+| Reviews                | 🚧 Planned     |
+| Gemma 3 1B Local       | ✅ Completed    |
+| AI Recommendation      | 🚧 Planned     |
+| AI Customer Support    | 🚧 Planned     |
+| Separate AI Deployment | 🚧 Planned     |
+| Pytest                 | 🚧 In Progress |
+| Render Deployment      | 🚧 In Progress |
+| CI/CD                  | 🚧 Planned     |
+
+---
+
+# 🎯 Current Priority
+
+The current development priority is:
 
 ```text
+1. Complete Cart
+2. Complete Coupon
+3. Complete Order
+4. Complete SSLCOMMERZ Payment
+5. Complete Rider & Delivery
+6. Complete Notifications
+7. Complete Reviews
+8. Expand Pytest Coverage
+9. Stabilize Redis + WebSocket
+10. Enable Production Celery Worker
+11. Complete Main API Deployment
+12. Build AI Food Recommendation
+13. Build AI Customer Support
+14. Deploy Separate Gemma AI Service
+15. Add CI/CD & Monitoring
+```
+
+---
+
+# 🏗️ Final Target Architecture
+
+```text
+                     Client
+                       │
+                       ▼
+                MealOrbit API
+                  FastAPI
+                       │
+        ┌──────────────┼──────────────┐
+        │              │              │
+        ▼              ▼              ▼
+   PostgreSQL        Redis        RabbitMQ
+        │              │              │
+        │              │              ▼
+        │              │        Celery Worker
+        │              │              │
+        │              ▼              ▼
+        │         WebSocket       Background Tasks
+        │              │
+        ▼              ▼
+    Business Logic   Real-time
+                     Tracking
+
+                       │
+                       ▼
+                 Payment Gateway
+                  SSLCOMMERZ
+
+                       │
+                       ▼
+                Separate AI API
+                       │
+                       ▼
+                  Gemma 3 1B
+```
+
+---
+
+# 🚀 Final Portfolio Goal
+
+MealOrbit is being developed as a production-style backend project demonstrating:
+
+```text
+FastAPI
+Async Backend Development
+PostgreSQL
+Async SQLAlchemy
+Alembic
 JWT Authentication
-Password Hashing
-Role Based Access Control
-Input Validation
-Rate Limiting
-CORS
-Secure Environment Variables
-SQL Injection Protection
-File Upload Validation
-Payment Verification
+Refresh Tokens
+RBAC
+Redis
+Redis Pub/Sub
+WebSocket
+RabbitMQ
+Celery
+Flower
+SSLCOMMERZ
+Admin API
+Restaurant Management
+Food Management
+Cart
+Orders
+Rider / Delivery
+Real-time Tracking
+Notifications
+Gemma 3 1B
+AI Recommendation
+AI Customer Support
+Docker
+Pytest
+Git / GitHub
+Production Deployment
 ```
 
-
-
----
-
-# 23. API Versioning
-
-API structure:
-
-```text
-/api/v1/auth
-/api/v1/users
-/api/v1/restaurants
-/api/v1/categories
-/api/v1/foods
-/api/v1/cart
-/api/v1/orders
-/api/v1/payments
-/api/v1/riders
-/api/v1/reviews
-/api/v1/notifications
-/api/v1/admin
-/api/v1/ai
-```
-
----
-
-# 24. Suggested Folder Structure
-
-```text
-food-delivery-backend/
-│
-├── app/
-│   ├── api/
-│   │   └── v1/
-│   │       ├── auth/
-│   │       ├── users/
-│   │       ├── restaurants/
-│   │       ├── categories/
-│   │       ├── foods/
-│   │       ├── cart/
-│   │       ├── orders/
-│   │       ├── payments/
-│   │       ├── riders/
-│   │       ├── reviews/
-│   │       ├── notifications/
-│   │       ├── admin/
-│   │       └── ai/
-│   │
-│   ├── models/
-│   ├── schemas/
-│   ├── services/
-│   ├── repositories/
-│   ├── dependencies/
-│   └── utils/
-│
-├── config/
-│
-├── tasks/
-│
-├── alembic/
-│
-├── tests/
-│
-├── uploads/
-│
-├── docker/
-│
-├── .env
-├── .env.example
-├── .gitignore
-├── alembic.ini
-├── Dockerfile
-├── docker-compose.yml
-├── requirements.txt
-├── README.md
-└── main.py
-```
-
----
-
-# 🗄️ Main Database Tables
-
-```text
-users
-addresses
-restaurants
-restaurant_hours
-
-food_categories
-foods
-food_addons
-
-carts
-cart_items
-
-coupons
-
-orders
-order_items
-
-payments
-
-riders
-deliveries
-
-reviews
-
-notifications
-refresh_tokens
-password_reset_tokens
-```
-
----
-
-# 🚀 Development Order
-
-
-
-### Phase 1 — Foundation
-
-```text
-1. Project Setup
-2. PostgreSQL
-3. SQLAlchemy
-4. Alembic
-5. Docker
-6. Environment Configuration
-```
-
-### Phase 2 — Authentication
-
-```text
-7. User Model
-8. Register
-9. Login
-10. JWT
-11. Refresh Token
-12. Email Verification
-13. Forgot Password
-```
-
-### Phase 3 — Restaurant & Food
-
-```text
-14. Restaurant
-15. Restaurant Hours
-16. Food Category
-17. Food
-18. Search
-19. Filtering
-20. Pagination
-```
-
-### Phase 4 — Shopping
-
-```text
-21. Cart
-22. Cart Items
-23. Coupon
-24. Checkout
-```
-
-### Phase 5 — Order
-
-```text
-25. Order
-26. Order Item
-27. Order Status
-28. Order History
-```
-
-### Phase 6 — Payment
-
-```text
-29. Payment Model
-30. SSLCOMMERZ
-31. Payment Initialization
-32. Success Callback
-33. Fail Callback
-34. Cancel Callback
-35. IPN
-36. Payment Verification
-```
-
-### Phase 7 — Delivery
-
-```text
-37. Rider
-38. Delivery
-39. Rider Assignment
-40. Delivery Status
-41. WebSocket Tracking
-```
-
-### Phase 8 — Async Processing
-
-```text
-42. RabbitMQ
-43. Celery
-44. Email Tasks
-45. Notification Tasks
-46. Flower
-```
-
-### Phase 9 — Redis
-
-```text
-47. Redis
-48. Caching
-49. Rate Limiting
-50. Pub/Sub
-```
-
-### Phase 10 — AI
-
-```text
-51. Ollama
-52. Food Recommendation
-53. AI Customer Support
-```
-
-### Phase 11 — Testing
-
-```text
-54. Pytest
-55. Auth Tests
-56. Food Tests
-57. Cart Tests
-58. Order Tests
-59. Payment Tests
-60. Integration Tests
-```
-
-### Phase 12 — Deployment
-
-```text
-61. Docker Compose
-62. Production Environment
-63. PostgreSQL
-64. Redis
-65. RabbitMQ
-66. Celery Worker
-67. Flower
-68. FastAPI
-69. Nginx
-70. CI/CD
-```
-
----
-
-# ⭐ Final Project Target
-
-
-
-```text
-                    ┌──────────────┐
-                    │   Client     │
-                    └──────┬───────┘
-                           ↓
-                    ┌──────────────┐
-                    │   FastAPI    │
-                    └──────┬───────┘
-                           ↓
-              ┌────────────┴────────────┐
-              ↓                         ↓
-        PostgreSQL                    Redis
-              │                         │
-              │                    WebSocket
-              │
-              ↓
-         Order / Food
-         Payment / User
-              │
-              ↓
-          Celery
-              ↓
-          RabbitMQ
-              ↓
-        Background Tasks
-              │
-              ↓
-       Email / Notification
-
-              ┌──────────────┐
-              │ SSLCOMMERZ   │
-              └──────────────┘
-
-              ┌──────────────┐
-              │   Ollama AI  │
-              └──────────────┘
-```
-
-## 🎯 Portfolio Goal
-
-এই project শেষ হলে GitHub README-তে highlight করা যাবে:
-
-* Production-style FastAPI architecture
-* Async PostgreSQL
-* JWT Authentication
-* Role Based Access Control
-* Redis Caching
-* RabbitMQ + Celery
-* Real-time WebSocket
-* SSLCOMMERZ Payment
-* AI Food Recommendation
-* AI Customer Support
-* Dockerized Backend
-* Automated Tests
-* API Documentation
-
-
+The final goal is to build a complete, scalable backend architecture rather than a basic CRUD application.
