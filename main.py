@@ -18,6 +18,7 @@ from app.api.v1.location.location_router import router as location_router
 from app.api.v1.location.location_ws_router import router as websocket_router
 from app.api.v1.redis.redis_router import router as redis_router
 from app.api.v1.ai.ai_gemma_router import router as ai_gemma_router
+from app.api.v1.admin.admin_router import router as admin_router
 
 
 
@@ -43,6 +44,7 @@ app.include_router(notification_router, prefix="/api/v1/notifications", tags=["N
 app.include_router(websocket_router,prefix="/api/v1/location-ws",tags=["WebSocket Tracking"])
 app.include_router(review_router, prefix="/api/v1/reviews", tags=["Reviews"])
 app.include_router(ai_gemma_router, prefix="/api/v1/ai-gemma", tags=["AI Assistant"])
+app.include_router(admin_router, prefix="/api/v1/admin", tags=["Admin"])
 app.include_router(redis_router, prefix="/api/v1/redis", tags=["Redis"])
 
 
