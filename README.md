@@ -1,7 +1,8 @@
 # 🍔 MealOrbit — Food Delivery Backend API
 
 MealOrbit is a production-style **Food Delivery Backend API** built with FastAPI.
-The project focuses on real-world backend architecture, authentication, database management, payments, caching, real-time communication, background processing, AI integration, testing, and deployment.
+
+The project focuses on real-world backend engineering concepts including authentication, role-based access control, database management, payments, caching, real-time communication, background processing, AI integration, testing, Docker, and deployment.
 
 ---
 
@@ -16,12 +17,14 @@ The project focuses on:
 * Role-Based Access Control
 * Secure authentication
 * Async database operations
+* PostgreSQL database management
 * Redis caching and real-time communication
 * Payment integration
 * Background task processing
 * AI-powered food assistance
 * Automated testing
-* Dockerized development and deployment
+* Dockerized development
+* Production deployment
 
 ---
 
@@ -63,7 +66,7 @@ The project focuses on:
 * RabbitMQ
 * Flower
 
-> **Current Status:** Celery, RabbitMQ, and Flower configuration are included in the project. The Celery Worker is currently disabled/commented and can be enabled when background processing is required.
+> **Current Status:** Celery, RabbitMQ, and Flower are configured in the project. The Celery Worker is currently disabled/commented and can be enabled when background processing is required.
 
 ## Payment
 
@@ -76,6 +79,8 @@ The project focuses on:
 * PyTorch
 * AI Food Recommendation
 * AI Customer Support
+
+> **Deployment Note:** Gemma 3 1B is integrated and tested locally. Due to the memory requirements of PyTorch and the Gemma model, the AI service is not currently deployed on the Render web service. A separate higher-memory AI service is planned for production deployment.
 
 ## DevOps
 
@@ -152,7 +157,7 @@ updated_at
 
 ---
 
-## 🏪 Restaurant Management
+# 🏪 Restaurant Management
 
 Restaurant Owners can:
 
@@ -166,6 +171,8 @@ Restaurant Owners can:
 * Open / Close Restaurant
 * View Restaurant Orders
 
+Administrators can manage and control restaurant-related operations.
+
 ### Restaurant Status
 
 ```text
@@ -176,7 +183,7 @@ BUSY
 
 ---
 
-## 🍔 Food Category
+# 🍔 Food Category
 
 Example categories:
 
@@ -200,7 +207,7 @@ Features:
 
 ---
 
-## 🍕 Food / Menu
+# 🍕 Food / Menu
 
 Restaurant Owners can manage food items.
 
@@ -234,7 +241,7 @@ updated_at
 
 ---
 
-## 🛒 Cart
+# 🛒 Cart
 
 Customers can:
 
@@ -260,7 +267,7 @@ Grand Total
 
 ---
 
-## 🎟️ Coupon / Discount
+# 🎟️ Coupon / Discount
 
 Features:
 
@@ -482,25 +489,31 @@ Out for Delivery
 Delivered
 ```
 
-### Future GPS Architecture
+### Real-time Architecture
 
 ```text
-Rider GPS
-   ↓
+Rider
+  ↓
+FastAPI
+  ↓
 Redis
-   ↓
+  ↓
 Redis Pub/Sub
-   ↓
+  ↓
 WebSocket
-   ↓
+  ↓
 Customer
 ```
+
+The WebSocket layer is used for real-time delivery location and status communication.
 
 ---
 
 # 🔔 Notification System
 
 ## Email Notifications
+
+The project includes email notification functionality for:
 
 * Welcome Email
 * Account Verification
@@ -512,6 +525,8 @@ Customer
 * Order Delivered
 
 ## In-App Notifications
+
+Examples:
 
 * Order Status
 * Payment Status
@@ -631,7 +646,7 @@ Duplicate reviews are prevented through application validation and database cons
 
 # 🔎 Search & Filtering
 
-Food search:
+Food search supports queries such as:
 
 ```text
 /search?query=burger
@@ -699,6 +714,20 @@ Recommended for you:
 
 The backend can provide available food data to the AI service so that recommendations are based on actual database data.
 
+### Current AI Deployment Status
+
+```text
+Gemma 3 1B
+        ↓
+Local Development
+        ↓
+Integrated & Tested
+```
+
+The model is currently **not deployed inside the Render MealOrbit web service** because the memory requirements of PyTorch and Gemma 3 1B exceed the available memory of the current deployment environment.
+
+A separate higher-memory AI service is planned for production deployment.
+
 ---
 
 # 🤖 AI Customer Support
@@ -723,15 +752,19 @@ on the way with your order.
 
 The AI model should not have unrestricted access to sensitive database data.
 
-Instead, the backend provides controlled and authorized data through application services/functions.
+Instead, the backend provides controlled and authorized data through application services or backend functions.
 
 ---
 
 # 👨‍💼 Admin API
 
-Admin features include:
+MealOrbit uses the existing `User` model with an `admin` role for administrative functionality.
 
-## Users
+No separate Admin model is required.
+
+## User Management
+
+Admin features include:
 
 ```text
 View Users
@@ -749,7 +782,11 @@ RESTAURANT_OWNER
 RIDER
 ```
 
-## Restaurants
+The admin role itself is not assigned through the normal user role-change endpoint.
+
+## Restaurant Management
+
+Administrative operations can include:
 
 ```text
 Approve Restaurant
@@ -757,7 +794,7 @@ Reject Restaurant
 Block Restaurant
 ```
 
-## Orders
+## Order Management
 
 ```text
 View All Orders
@@ -765,7 +802,7 @@ Filter Orders
 Cancel Order
 ```
 
-## Payments
+## Payment Management
 
 ```text
 View Payments
@@ -999,7 +1036,7 @@ password_reset_tokens
 49. Flower
 ```
 
-> Celery Worker is currently disabled/commented and can be enabled when background processing is required.
+> Celery Worker is currently disabled/commented and can be enabled when background task processing is required.
 
 ## Phase 9 — Redis
 
@@ -1019,33 +1056,35 @@ password_reset_tokens
 57. AI Food Recommendation
 58. AI Customer Support
 59. Controlled Backend AI Tools
+60. Separate AI Production Deployment
 ```
 
 ## Phase 11 — Testing
 
 ```text
-60. Pytest
-61. Authentication Tests
-62. Food Tests
-63. Cart Tests
-64. Order Tests
-65. Payment Tests
-66. Integration Tests
+61. Pytest
+62. Authentication Tests
+63. Food Tests
+64. Cart Tests
+65. Order Tests
+66. Payment Tests
+67. Integration Tests
 ```
 
 ## Phase 12 — Deployment
 
 ```text
-67. Docker Compose
-68. Production Environment
-69. PostgreSQL
-70. Redis
-71. RabbitMQ
-72. Celery Worker
-73. Flower
-74. FastAPI
-75. Nginx
-76. CI/CD
+68. Docker Compose
+69. Production Environment
+70. PostgreSQL
+71. Redis
+72. RabbitMQ
+73. Celery Worker
+74. Flower
+75. FastAPI
+76. Nginx
+77. CI/CD
+78. Separate AI Service
 ```
 
 ---
@@ -1060,19 +1099,20 @@ password_reset_tokens
                                 ▼
                          ┌──────────────┐
                          │   FastAPI    │
+                         │  MealOrbit   │
                          └──────┬───────┘
                                 │
               ┌─────────────────┼─────────────────┐
               │                 │                 │
               ▼                 ▼                 ▼
-       ┌─────────────┐   ┌─────────────┐   ┌─────────────┐
-       │ PostgreSQL  │   │    Redis    │   │ Gemma 3 1B  │
-       │             │   │             │   │ HuggingFace │
-       └─────────────┘   └──────┬──────┘   └─────────────┘
-                                │
-                                ▼
-                       WebSocket / PubSub
-                                │
+       ┌─────────────┐   ┌─────────────┐   ┌──────────────┐
+       │ PostgreSQL  │   │    Redis    │   │ AI Service   │
+       │             │   │             │   │ Gemma 3 1B   │
+       └─────────────┘   └──────┬──────┘   └──────┬───────┘
+                                │                 │
+                                ▼                 ▼
+                       WebSocket / PubSub   Hugging Face
+                                │            Transformers
                                 ▼
                          Real-time Data
 
@@ -1093,31 +1133,181 @@ password_reset_tokens
                          └──────────────┘
 ```
 
+### AI Production Architecture
+
+The current AI model is designed to be separated from the main API during production deployment.
+
+```text
+                    ┌──────────────┐
+                    │   Client     │
+                    └──────┬───────┘
+                           │
+                           ▼
+                    ┌──────────────┐
+                    │ MealOrbit API│
+                    │   FastAPI    │
+                    └──────┬───────┘
+                           │
+                           │ AI Request
+                           ▼
+                 ┌─────────────────────┐
+                 │   Separate AI       │
+                 │      Service        │
+                 │                     │
+                 │    Gemma 3 1B       │
+                 │    PyTorch          │
+                 │    Transformers     │
+                 └─────────────────────┘
+```
+
+This architecture avoids loading the large AI model inside the main API server.
+
 ---
 
-# 📌 Current Project Status
+# 📊 Current Project Status
 
-| Component             | Status                  |
-| --------------------- | ----------------------- |
-| FastAPI               | ✅ Active                |
-| PostgreSQL            | ✅ Active                |
-| Async SQLAlchemy      | ✅ Active                |
-| Alembic               | ✅ Active                |
-| JWT Authentication    | ✅ Active                |
-| Role-Based Access     | ✅ Active                |
-| Redis                 | ✅ Active                |
-| WebSocket             | ✅ Implemented           |
-| RabbitMQ              | ✅ Configured            |
-| Celery                | ✅ Configured            |
-| Flower                | ✅ Configured            |
-| Celery Worker         | ⏸️ Disabled / Commented |
-| SSLCOMMERZ            | ✅ Sandbox               |
-| Hugging Face          | ✅ Integrated            |
-| Gemma 3 1B            | ✅ Integrated            |
-| PyTorch               | ✅ Integrated            |
-| Pytest                | 🚧 In Progress          |
-| Docker                | ✅ Configured            |
-| Production Deployment | 🚧 In Progress          |
+| Component                | Status                  |
+| ------------------------ | ----------------------- |
+| FastAPI                  | ✅ Active                |
+| PostgreSQL               | ✅ Active                |
+| Async SQLAlchemy         | ✅ Active                |
+| Alembic                  | ✅ Active                |
+| JWT Authentication       | ✅ Active                |
+| Role-Based Access        | ✅ Active                |
+| Redis                    | ✅ Active                |
+| WebSocket                | ✅ Implemented           |
+| RabbitMQ                 | ✅ Configured            |
+| Celery                   | ✅ Configured            |
+| Flower                   | ✅ Configured            |
+| Celery Worker            | ⏸️ Disabled / Commented |
+| SSLCOMMERZ               | ✅ Sandbox               |
+| Hugging Face             | ✅ Integrated            |
+| Gemma 3 1B               | ✅ Integrated / Local    |
+| PyTorch                  | ✅ Integrated            |
+| AI Production Deployment | 🚧 Planned              |
+| Pytest                   | 🚧 In Progress          |
+| Docker                   | ✅ Configured            |
+| Production Deployment    | 🚧 In Progress          |
+
+---
+
+# 🧪 Testing
+
+MealOrbit uses **Pytest** for automated testing.
+
+Planned and ongoing test coverage includes:
+
+```text
+Authentication
+User Management
+Restaurant
+Food
+Cart
+Coupon
+Order
+Payment
+Rider
+Delivery
+Review
+Admin
+AI
+Integration
+```
+
+Testing is an ongoing part of the project.
+
+---
+
+# 🐳 Docker
+
+Docker is used for local infrastructure and development.
+
+Configured services include:
+
+```text
+PostgreSQL
+Redis
+RabbitMQ
+```
+
+Docker Compose is used to manage the infrastructure services.
+
+The project can be run using the Docker Compose configuration inside:
+
+```text
+docker/docker-compose.yml
+```
+
+---
+
+# 🌐 Deployment
+
+The main MealOrbit API is being prepared for production deployment.
+
+The project has been tested with a cloud deployment environment using:
+
+```text
+FastAPI
+PostgreSQL
+Docker
+Environment Variables
+```
+
+### AI Deployment Limitation
+
+The Gemma 3 1B model works locally but requires more memory than the current Render web service environment provides.
+
+Therefore:
+
+```text
+Main API
+   ↓
+Production Web Service
+
+Gemma 3 1B
+   ↓
+Separate Higher-Memory AI Service
+   ↓
+Future Production Deployment
+```
+
+This separation is planned to keep the main API lightweight and stable.
+
+---
+
+# 📌 Current Project Status Summary
+
+MealOrbit currently has:
+
+```text
+FastAPI Backend
+        ↓
+Async PostgreSQL
+        ↓
+JWT Authentication
+        ↓
+Role-Based Access Control
+        ↓
+Restaurant & Food Management
+        ↓
+Cart & Checkout
+        ↓
+Orders
+        ↓
+SSLCOMMERZ Sandbox
+        ↓
+Rider & Delivery
+        ↓
+Redis
+        ↓
+WebSocket
+        ↓
+RabbitMQ / Celery Configuration
+        ↓
+AI Integration with Gemma 3 1B
+```
+
+The AI model is currently available for local development and testing, while production AI deployment is planned as a separate service.
 
 ---
 
@@ -1149,22 +1339,239 @@ MealOrbit is designed as a portfolio project to demonstrate practical backend en
 
 ---
 
-## 📄 API Documentation
+# 📄 API Documentation
 
-FastAPI automatically provides interactive API documentation:
+FastAPI automatically provides interactive API documentation.
+
+### Swagger UI
 
 ```text
 /docs
 ```
 
-and OpenAPI specification:
+### OpenAPI Specification
 
 ```text
 /openapi.json
 ```
 
+When running locally:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
 ---
 
-## 🚀 Project Status
+# 📦 Installation
 
-MealOrbit is an ongoing backend engineering project focused on building and practicing a production-style food delivery platform with modern backend technologies, real-time features, asynchronous processing, payment integration, and AI capabilities.
+## 1. Clone the Repository
+
+```bash
+git clone https://github.com/Rezwan-Islam-Raju/MealOrbit.git
+cd MealOrbit
+```
+
+## 2. Create Virtual Environment
+
+Windows PowerShell:
+
+```powershell
+python -m venv .venv
+```
+
+Activate:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+## 3. Install Dependencies
+
+```powershell
+pip install -r requirements.txt
+```
+
+## 4. Configure Environment Variables
+
+Create a `.env` file based on `.env.example`.
+
+Configure:
+
+```text
+DATABASE_URL
+JWT_SECRET_KEY
+JWT_REFRESH_SECRET_KEY
+
+EMAIL_HOST
+EMAIL_PORT
+EMAIL_USERNAME
+EMAIL_PASSWORD
+
+REDIS_URL
+
+RABBITMQ_URL
+
+SSLCOMMERZ_STORE_ID
+SSLCOMMERZ_STORE_PASSWORD
+
+HUGGINGFACE_TOKEN
+```
+
+## 5. Run Database Migrations
+
+```powershell
+alembic upgrade head
+```
+
+## 6. Start FastAPI
+
+```powershell
+python -m uvicorn main:app --reload
+```
+
+API will be available at:
+
+```text
+http://127.0.0.1:8000
+```
+
+Swagger:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+---
+
+# 🐇 RabbitMQ / Redis
+
+Docker Compose configuration:
+
+```text
+docker/docker-compose.yml
+```
+
+From the project root:
+
+```powershell
+docker compose -f docker/docker-compose.yml up -d
+```
+
+Check services:
+
+```powershell
+docker compose -f docker/docker-compose.yml ps
+```
+
+---
+
+# ⚙️ Celery Worker
+
+The Celery Worker is currently disabled/commented in the project workflow.
+
+When background processing is required, the worker can be started with:
+
+```powershell
+celery -A app.core.celery_app.celery_app worker --loglevel=info --pool=solo
+```
+
+Flower can be used for task monitoring when configured:
+
+```text
+http://127.0.0.1:5555
+```
+
+---
+
+# 🤖 Local AI Development
+
+Gemma 3 1B is integrated for local AI development.
+
+The model is stored locally and loaded through:
+
+```text
+Hugging Face Transformers
+        ↓
+Gemma 3 1B
+        ↓
+PyTorch
+        ↓
+FastAPI
+```
+
+Because the model requires significant memory, it is not currently loaded into the production Render web service.
+
+A separate AI deployment is planned.
+
+---
+
+# 📈 Future Improvements
+
+Planned improvements include:
+
+* Separate production AI service
+* Higher-memory AI deployment
+* Improved AI tool calling
+* Database-aware AI recommendations
+* RAG-based food knowledge
+* More comprehensive Pytest coverage
+* Production Celery Worker
+* Production Flower monitoring
+* Better rate limiting
+* Advanced restaurant analytics
+* Order analytics
+* Payment reconciliation
+* CI/CD pipeline
+* Nginx reverse proxy
+* Production monitoring
+* Logging and observability
+* Automated deployment
+
+---
+
+# 🏁 Project Status
+
+MealOrbit is an ongoing backend engineering project focused on building and practicing a production-style food delivery platform with:
+
+* Modern backend architecture
+* Secure authentication
+* Async database operations
+* Real-time communication
+* Redis caching
+* Background processing
+* Payment integration
+* AI capabilities
+* Automated testing
+* Dockerized development
+* Cloud deployment
+
+The core backend is actively developed, while AI production deployment and several advanced production features remain ongoing work.
+
+---
+
+## 👨‍💻 Developer
+
+**Rezwan Islam Raju**
+
+Backend-focused developer working with:
+
+```text
+Python
+FastAPI
+PostgreSQL
+SQLAlchemy
+Redis
+Celery
+RabbitMQ
+Docker
+AI / LLM Integration
+```
+
+---
+
+## ⭐ Project
+
+If you find this project useful or interesting, feel free to explore the repository and follow the development progress.
+
+**MealOrbit — Food Delivery Backend API**
